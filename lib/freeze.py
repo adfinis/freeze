@@ -74,7 +74,12 @@ try:
 except:
     _string_types = (six.string_types)
 
+_builtin_function_or_method_type = type(dict().get)
 
+
+# At the moment the freeze variants don't share code. My merged version of
+# freeze was quite slow. Unit I come up with a better solution all freeze
+# variants have to be maintained.
 def freeze(data_structure):
     """Freezing a data-structure makes all items tuples and therefore
     all levels are comparable/hashable/sortable. It has cycle detection
@@ -108,7 +113,12 @@ def freeze(data_structure):
     >>> freeze(testdata) == freeze_fast(testdata)
     True
 
-    >>> len(freeze(sys)) > 0
+    Hash anything!
+
+    >>> a = freeze(sys)
+    >>> len(a) > 0
+    True
+    >>> hash(a) != None
     True
     """
 
@@ -153,12 +163,17 @@ def freeze(data_structure):
                 pass
             if tlen != -1:
                 return tuple([freeze_helper(x) for x in data_structure])
+        # To guarantee that the result is hashable we do not return
+        # builtin_function_or_method
+        if isinstance(data_structure, _builtin_function_or_method_type):
+            return str(data_structure)
         return data_structure
     return freeze_helper(data_structure)
 
 
 def freeze_fast(data_structure):
-    """Like freeze but has no cycle detection.
+    """Like freeze but has no cycle detection and it doesn't
+    guarantee that the result is hashable.
 
     :param   data_structure: The structure to convert
 
@@ -303,6 +318,10 @@ def freeze_stable(data_structure, assume_key=False):
                             protocol=pickle_protocol
                         )
                     ))
+        # To guarantee that the result is hashable we do not return
+        # builtin_function_or_method
+        if isinstance(data_structure, _builtin_function_or_method_type):
+            return str(data_structure)
         return data_structure
     return freeze_stable_helper(data_structure)
 
