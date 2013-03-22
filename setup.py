@@ -3,7 +3,8 @@ from setuptools import setup, find_packages
 setup(
     name = "freeze",
     version = "0.1.0",
-    packages = find_packages(),
+    package_dir = {'': 'lib'},
+    py_modules=['freeze'],
 
     install_requires = ['six'],
 
