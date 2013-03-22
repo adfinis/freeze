@@ -503,9 +503,11 @@ def frozen_equal_assert(a, b, deterministic=True):
     """
 
     if not deterministic:
-        freeze = lambda x: freeze_stable(x, assume_key=True)
-    a = freeze(a)
-    b = freeze(b)
+        freeze_func = lambda x: freeze_stable(x, assume_key=True)
+    else:
+        freeze_func = freeze
+    a = freeze_func(a)
+    b = freeze_func(b)
     # If a == b we are save anyway
     if a != b:
         flatten_a = set(_flatten_for_assert(a))
