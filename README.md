@@ -12,4 +12,4 @@ Dev version docs: https://freeze.readthedocs.org/en/dev/
 TODO
 ----
 
-* Will it be possible to freeze_stable(), like freeze() works even on modules?
+* Will it be possible to freeze_stable() anything, like freeze() works even on modules?
