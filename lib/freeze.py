@@ -382,9 +382,9 @@ def recursive_hash(data_structure):
         except:
             pass
         if tlen != -1:
-            hashs = tuple(stable_hash(item) for item in data_structure)
-            return tuple(hashs)
-    return recursive_hash(data_structure)
+            hashs = tuple(recursive_hash(item) for item in data_structure)
+            return hash(tuple(hashs))
+    return hash(data_structure)
 
 
 def _flatten_helper(iterable, pathlist, path, parent_index=False):
