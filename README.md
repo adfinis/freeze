@@ -6,3 +6,5 @@ Freeze - hash / sort / compare / diff anything
 Freeze the state of data-structures and objects for data-analysis or testing (diffing data-structures).
 
 Docs: https://freeze.readthedocs.org/en/latest/
+
+Dev version docs: https://freeze.readthedocs.org/en/dev/
