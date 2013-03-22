@@ -9,7 +9,8 @@ setup(
 
     author = "Jean-Louis Fuchs",
     author_email = "ganwell@fangorn.ch",
-    description = "Freeze the state of data-structures for "
+    description = "Freeze - hash / sort / compare / diff anything\n\n"
+                  "Freeze the state of data-structures and objects for "
                   "data-analysis or testing (diffing data-structures).",
     license = "Modified BSD",
     keywords = "freeze state hash sort compare unittest",

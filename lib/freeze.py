@@ -3,15 +3,15 @@
 # vim: autoindent expandtab tabstop=4 sw=4 sts=4 filetype=python
 
 """
-Freeze the state of data-structures for data-analysis or testing
+Freeze the state of data-structures and objects for data-analysis or testing
 (diffing data-structures). Frozen data-structures consist of only tuples
 and these are comparable/sortable/hashable. The freeze method can be used
 for many purposes for example implement __hash__ for your complex object
 very fast. freeze_stable and flatten are usable for testing and analysis.
 
-Run doctests by calling python freeze.py
-
 Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
+
+Run doctests by with "python lib/freeze.py"
 """
 
 # Copyright (c) 2012, Adfinis SyGroup AG
