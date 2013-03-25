@@ -253,7 +253,10 @@ def _recursive_sort(data_structure, assume_key=False):
                         x,
                         assume_key=assume_key
                     ) for x in data_structure],
-                    key=_traverse
+                    key=lambda x: pickle.dumps(
+                        x,
+                        protocol=pickle_protocol
+                    )
                 ))
     return data_structure
 
