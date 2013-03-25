@@ -8,3 +8,8 @@ Freeze the state of data-structures and objects for data-analysis or testing (di
 Docs: https://freeze.readthedocs.org/en/latest/
 
 Dev version docs: https://freeze.readthedocs.org/en/dev/
+
+TODO
+----
+
+* tree_diff would breadth-first improve readability?

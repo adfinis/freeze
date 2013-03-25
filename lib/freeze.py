@@ -561,8 +561,19 @@ def tree_diff(a, b, n=5, deterministic=True):
     ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
     ...     []
     ... ]
-    >>> transparent_repr(tree_diff(a, b))
-    <BLANKLINE>
+    >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
+    @@ -1,10 +1,10 @@
+                                                       -- depth: 0
+     a
+                                                       -- depth: 1
+    +4
+     3
+    -4
+                                                       -- up
+                                                       -- depth: 1
+                                                       -- depth: 2
+     a
+                                                       -- depth: 3
 
     >>> a = [
     ...     'a',
@@ -577,20 +588,31 @@ def tree_diff(a, b, n=5, deterministic=True):
     ...     []
     ... ]
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
-    @@ -10,12 +10,12 @@
+    @@ -1,10 +1,10 @@
+                                                       -- depth: 0
+     a
+                                                       -- depth: 1
+    +4
+     3
+    -4
+                                                       -- up
+                                                       -- depth: 1
+                                                       -- depth: 2
+     a
+                                                       -- depth: 3
+    @@ -16,11 +16,11 @@
                                                        -- depth: 7
      2
      3
      5
                                                        -- up
+    -tree
     +3
      4
-    -tree
-                                                       -- up
-     w
                                                        -- up
                                                        -- up
-     3
+                                                       -- up
+                                                       -- up
     """
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)
