@@ -534,7 +534,7 @@ def _traverse(data_structure):
     return result
 
 
-def tree_diff(a, b, n=5):
+def tree_diff(a, b, n=5, deterministic=True):
     """Freeze and stringify any data-structure or object, traverse
     it depth-first and apply a unified diff.
 
@@ -592,29 +592,36 @@ def tree_diff(a, b, n=5):
                                                        -- up
      3
     """
-    frozen_a = _traverse(freeze_stable(a, stringify=True))
-    frozen_b = _traverse(freeze_stable(b, stringify=True))
-    return "\n".join(difflib.unified_diff(frozen_a, frozen_b, n=n, lineterm=""))
-
-
-def tree_diff_assert(a, b, deterministic=False):
-    """Assert if a equals b. Freeze and stringify any data-structure or object,
-    traverse it depth-first and apply a unified diff, to display the result.
-
-    :param             a: data_structure a
-    :param             b: data_structure b
-    :param deterministic: Do not sort the tree
-    """
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)
-    # If a == b we are save anyway
     if deterministic:
         a = _traverse(a)
         b = _traverse(b)
     else:
         a = _traverse(_recursive_sort(a))
         b = _traverse(_recursive_sort(b))
-    msg = "\n".join(difflib.unified_diff(a, b, lineterm=""))
+    return "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
+
+
+def tree_diff_assert(a, b, n=5, deterministic=True):
+    """Assert if a equals b. Freeze and stringify any data-structure or object,
+    traverse it depth-first and apply a unified diff, to display the result.
+
+    :param             a: data_structure a
+    :param             b: data_structure b
+    :param             n: lines of context
+    :type              n: int
+    :param deterministic: Do not sort the tree
+    """
+    a = freeze(a, stringify=True)
+    b = freeze(b, stringify=True)
+    if deterministic:
+        a = _traverse(a)
+        b = _traverse(b)
+    else:
+        a = _traverse(_recursive_sort(a))
+        b = _traverse(_recursive_sort(b))
+    msg = "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
     if len(msg) != 0:
         assert False, "difference: \n%s" % msg
 
