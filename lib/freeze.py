@@ -520,22 +520,33 @@ def _flatten_helper(iterable, pathlist, path, parent_index=False):
 def _traverse(data_structure):
     result = list()
 
-    def traverse_helper(data_structure):
+    def traverse_helper(data_structure, depth):
         if isinstance(data_structure, tuple):
+            result.append("                                                  "
+                          "-- depth: %d" % depth)
             for item in data_structure:
-                traverse_helper(item)
+                traverse_helper(item, depth + 1)
+            result.append("                                                  "
+                          "-- up")
             return
         result.append(data_structure)
-    traverse_helper(data_structure)
+    traverse_helper(data_structure, 0)
     return result
 
 
-def tree_diff(a, b):
+def tree_diff(a, b, n=5):
     """Freeze and stringify any data-structure or object, traverse
     it depth-first and apply a unified diff.
 
+    Annotation:
+
+    "-- depth: x" Going down to level: x
+    "-- up"       Going one level up
+
     :param             a: data_structure a
     :param             b: data_structure b
+    :param             n: lines of context
+    :type              n: int
 
 
     >>> a = [
@@ -566,20 +577,24 @@ def tree_diff(a, b):
     ...     []
     ... ]
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
-    @@ -1,8 +1,8 @@
+    @@ -10,12 +10,12 @@
+                                                       -- depth: 7
      2
      3
      5
+                                                       -- up
     +3
      4
     -tree
+                                                       -- up
      w
+                                                       -- up
+                                                       -- up
      3
-     a
     """
     frozen_a = _traverse(freeze_stable(a, stringify=True))
     frozen_b = _traverse(freeze_stable(b, stringify=True))
-    return "\n".join(difflib.unified_diff(frozen_a, frozen_b, lineterm=""))
+    return "\n".join(difflib.unified_diff(frozen_a, frozen_b, n=n, lineterm=""))
 
 
 def tree_diff_assert(a, b, deterministic=False):
