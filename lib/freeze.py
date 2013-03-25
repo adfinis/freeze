@@ -44,17 +44,21 @@ import six
 import pickle
 import pprint
 import sys
+import difflib
 
 __all__ = [
     "freeze",
     "freeze_fast",
     "freeze_stable",
-    "frozen_equal_assert",
+    "tree_diff_assert",
     "stable_hash",
     "recursive_hash",
+    "tree_diff",
     "flatten",
+    "frozen_equal_assert",
     "pickle_protocol",
-    "vformat"
+    "vformat",
+    "transparent_repr"
 ]
 
 
@@ -80,12 +84,14 @@ _builtin_function_or_method_type = type(dict().get)
 # At the moment the freeze variants don't share code. My merged version of
 # freeze was quite slow. Unit I come up with a better solution all freeze
 # variants have to be maintained.
-def freeze(data_structure):
+def freeze(data_structure, stringify=False):
     """Freezing a data-structure makes all items tuples and therefore
     all levels are comparable/hashable/sortable. It has cycle detection
     and will freeze any kind of python object.
 
     :param   data_structure: The structure to convert
+    :param        stringify: Stringify all leaves
+    :type         stringify: bool
 
     >>> freeze([
     ...     'a',
@@ -165,7 +171,10 @@ def freeze(data_structure):
                 return tuple([freeze_helper(x) for x in data_structure])
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
-        if isinstance(data_structure, _builtin_function_or_method_type):
+        if stringify or isinstance(
+            data_structure,
+            _builtin_function_or_method_type
+        ):
             return str(data_structure)
         return data_structure
     return freeze_helper(data_structure)
@@ -221,7 +230,35 @@ def freeze_fast(data_structure):
     return freeze_fast_helper(data_structure)
 
 
-def freeze_stable(data_structure, assume_key=False):
+def _recursive_sort(data_structure, assume_key=False):
+    # We don't sort strings
+    if not isinstance(data_structure, _string_types):
+        tlen = -1
+        # If item has a length we frezze it
+        try:
+            tlen = len(data_structure)
+        except:
+            pass
+        if tlen != -1:
+            if assume_key and tlen == 2:
+                return tuple([
+                    _recursive_sort(
+                        x,
+                        assume_key=assume_key
+                    ) for x in data_structure
+                ])
+            else:
+                return tuple(sorted(
+                    [_recursive_sort(
+                        x,
+                        assume_key=assume_key
+                    ) for x in data_structure],
+                    key=_traverse
+                ))
+    return data_structure
+
+
+def freeze_stable(data_structure, assume_key=False, stringify=False):
     """Like freeze but results are stable regarding sorting.
 
     The stable functionality changes the datestructure (sorting)!
@@ -235,9 +272,12 @@ def freeze_stable(data_structure, assume_key=False):
     difference when comparing two flattened structures.
 
     :param   data_structure: The structure to convert
-    :param   assume_key:     Assume that substructures of len() == 2
+    :param       assume_key: Assume that substructures of len() == 2
                              are key-value pairs -> don't sort
-    :type    assume_key:     bool
+    :type        assume_key: bool
+    :param        stringify: Stringify all leaves
+    :type         stringify: bool
+
 
     >>> a = freeze_stable([
     ...     'a',
@@ -264,9 +304,27 @@ def freeze_stable(data_structure, assume_key=False):
 
     >>> b"sdf" == freeze_stable({3: b"sdf", 4: 245234534})[1][1]
     True
+
+    >>> a = freeze_stable([
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ], stringify = True)
+    >>> a
+    ((), ((((((('2', '3', '5'), '3', '4'), 'w'),), '3'), 'a'),), ('3', '4'), 'a')
+    >>> a = freeze_stable([
+    ...     'a',
+    ...     [5, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ], stringify = True, assume_key=True)
+    >>> a
+    ((), ('5', '4'), 'a', (('a', ('3', (('w', (('2', '3', '5'), '3', '4')),))),))
     """
 
-    identity_set = set()
+    if not stringify:
+        identity_set = set()
 
     def freeze_stable_helper(data_structure):
         # Cycle detection
@@ -323,7 +381,16 @@ def freeze_stable(data_structure, assume_key=False):
         if isinstance(data_structure, _builtin_function_or_method_type):
             return str(data_structure)
         return data_structure
-    return freeze_stable_helper(data_structure)
+    if stringify:
+        return _recursive_sort(
+            freeze(
+                data_structure,
+                stringify=True
+            ),
+            assume_key=assume_key
+        )
+    else:
+        return freeze_stable_helper(data_structure)
 
 
 def stable_hash(data_structure):
@@ -445,8 +512,95 @@ def _flatten_helper(iterable, pathlist, path, parent_index=False):
             index += 1
 
 
+def _traverse(data_structure):
+    result = list()
+
+    def traverse_helper(data_structure):
+        if isinstance(data_structure, tuple):
+            for item in data_structure:
+                traverse_helper(item)
+            return
+        result.append(data_structure)
+    traverse_helper(data_structure)
+    return result
+
+
+def tree_diff(a, b):
+    """Freeze and stringify any data-structure or object, traverse
+    it depth-first and apply a unified diff.
+
+    :param             a: data_structure a
+    :param             b: data_structure b
+
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> transparent_repr(tree_diff(a, b))
+    <BLANKLINE>
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, 'tree', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
+    @@ -1,8 +1,8 @@
+     2
+     3
+     5
+    +3
+     4
+    -tree
+     w
+     3
+     a
+    """
+    frozen_a = _traverse(freeze_stable(a, stringify=True))
+    frozen_b = _traverse(freeze_stable(b, stringify=True))
+    return "\n".join(difflib.unified_diff(frozen_a, frozen_b, lineterm=""))
+
+
+def tree_diff_assert(a, b, deterministic=False):
+    """Assert if a equals b. Freeze and stringify any data-structure or object,
+    traverse it depth-first and apply a unified diff, to display the result.
+
+    :param             a: data_structure a
+    :param             b: data_structure b
+    :param deterministic: Do not sort the tree
+    """
+    a = freeze(a, stringify=True)
+    b = freeze(b, stringify=True)
+    # If a == b we are save anyway
+    if deterministic:
+        a = _traverse(a)
+        b = _traverse(b)
+    else:
+        a = _traverse(_recursive_sort(a))
+        b = _traverse(_recursive_sort(b))
+    msg = "\n".join(difflib.unified_diff(a, b, lineterm=""))
+    if len(msg) != 0:
+        assert False, "difference: \n%s" % msg
+
+
 def flatten(data_structure, assume_key=True):
-    """Converts a data_structure to a flat set of paths.
+    """Converts a data-structure to a flat set of paths.
     It makes it easier to comapre data-structures in unittests.
 
     Creating a set from a flattened structure can be lossy. This is the
@@ -561,6 +715,12 @@ class TransparentRepr(object):
             return self.repr_str
         else:
             return super(TransparentRepr, self).__repr__()
+
+
+def transparent_repr(string):
+    """The result is __repr__ transparent. Non-printable
+    characters won't be escaped"""
+    return TransparentRepr(string)
 
 
 def vformat(*args, **kwargs):
