@@ -271,6 +271,8 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     creates smaller structures for flatten and a smaller
     difference when comparing two flattened structures.
 
+    stringify allow to freeze_stable anything.
+
     :param   data_structure: The structure to convert
     :param       assume_key: Assume that substructures of len() == 2
                              are key-value pairs -> don't sort
