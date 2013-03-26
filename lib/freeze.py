@@ -92,7 +92,7 @@ def freeze(data_structure, stringify=False):
     and will freeze any kind of python object.
 
     :param   data_structure: The structure to convert
-    :param        stringify: Stringify all leaves
+    :param        stringify: Stringify all non-primitive leaves
     :type         stringify: bool
 
     >>> freeze([
@@ -288,7 +288,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     :param       assume_key: Assume that substructures of len() == 2
                              are key-value pairs -> don't sort
     :type        assume_key: bool
-    :param        stringify: Stringify all leaves
+    :param        stringify: Stringify all non-primitive leaves
     :type         stringify: bool
 
 
