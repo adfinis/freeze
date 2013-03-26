@@ -78,6 +78,8 @@ try:
 except:
     _string_types = (six.string_types)
 
+_primitive_types = (int, float, bool)
+
 _builtin_function_or_method_type = type(dict().get)
 
 
@@ -171,12 +173,18 @@ def freeze(data_structure, stringify=False):
                 return tuple([freeze_helper(x) for x in data_structure])
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
-        if stringify or isinstance(
-            data_structure,
-            _builtin_function_or_method_type
-        ):
-            return str(data_structure)
-        return data_structure
+        if stringify:
+            if not isinstance(data_structure, _primitive_types):
+                return str(data_structure)
+            else:
+                return data_structure
+        else:
+            if isinstance(
+                data_structure,
+                _builtin_function_or_method_type
+            ):
+                return str(data_structure)
+            return data_structure
     return freeze_helper(data_structure)
 
 
@@ -315,17 +323,17 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ], stringify = True)
+    ... ], stringify=True)
     >>> a
-    ((), ((((((('2', '3', '5'), '3', '4'), 'w'),), '3'), 'a'),), ('3', '4'), 'a')
+    ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
     >>> a = freeze_stable([
     ...     'a',
     ...     [5, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ], stringify = True, assume_key=True)
+    ... ], stringify=True, assume_key=True)
     >>> a
-    ((), ('5', '4'), 'a', (('a', ('3', (('w', (('2', '3', '5'), '3', '4')),))),))
+    ((), (5, 4), 'a', (('a', (3, (('w', ((2, 3, 5), 4, '3')),))),))
     """
 
     if not stringify:
@@ -549,15 +557,15 @@ def tree_diff(a, b, n=5, deterministic=True):
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
     @@ -1,8 +1,8 @@
      ('a',
-    - ('3',
-    -  '4'),
-    + ('4',
-    +  '3'),
+    - (3,
+    -  4),
+    + (4,
+    +  3),
       (('a',
-        ('3',
+        (3,
          (('w',
-           (('2',
-             '3',
+           ((2,
+             3,
 
     >>> a = [
     ...     'a',
@@ -574,20 +582,21 @@ def tree_diff(a, b, n=5, deterministic=True):
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
     @@ -1,12 +1,12 @@
      ('a',
-    - ('3',
-    -  '4'),
-    + ('4',
-    +  '3'),
+    - (3,
+    -  4),
+    + (4,
+    +  3),
       (('a',
-        ('3',
+        (3,
          (('w',
-           (('2',
-             '3',
-             '5'),
+           ((2,
+             3,
+             5),
     -       'tree',
     +       '3',
-            '4')),))),),
+            4)),))),),
       ())
+
     """
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)
