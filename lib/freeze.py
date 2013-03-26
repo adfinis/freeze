@@ -547,18 +547,17 @@ def tree_diff(a, b, n=5, deterministic=True):
     ...     []
     ... ]
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
-    @@ -1,10 +1,10 @@
-                                                       -- depth: 0
-     a
-                                                       -- depth: 1
-    +4
-     3
-    -4
-                                                       -- up
-                                                       -- depth: 1
-                                                       -- depth: 2
-     a
-                                                       -- depth: 3
+    @@ -1,8 +1,8 @@
+     ('a',
+    - ('3',
+    -  '4'),
+    + ('4',
+    +  '3'),
+      (('a',
+        ('3',
+         (('w',
+           (('2',
+             '3',
 
     >>> a = [
     ...     'a',
@@ -573,31 +572,22 @@ def tree_diff(a, b, n=5, deterministic=True):
     ...     []
     ... ]
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
-    @@ -1,10 +1,10 @@
-                                                       -- depth: 0
-     a
-                                                       -- depth: 1
-    +4
-     3
-    -4
-                                                       -- up
-                                                       -- depth: 1
-                                                       -- depth: 2
-     a
-                                                       -- depth: 3
-    @@ -16,11 +16,11 @@
-                                                       -- depth: 7
-     2
-     3
-     5
-                                                       -- up
-    -tree
-    +3
-     4
-                                                       -- up
-                                                       -- up
-                                                       -- up
-                                                       -- up
+    @@ -1,12 +1,12 @@
+     ('a',
+    - ('3',
+    -  '4'),
+    + ('4',
+    +  '3'),
+      (('a',
+        ('3',
+         (('w',
+           (('2',
+             '3',
+             '5'),
+    -       'tree',
+    +       '3',
+            '4')),))),),
+      ())
     """
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)

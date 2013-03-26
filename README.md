@@ -14,3 +14,5 @@ TODO
 
 * Would using generators everywhere improve anything? Difflib supports
   generators, so we might save some memory creating diffs?!
+* If we used generators, I'd have to find or write a generator stream
+  that would be used with pprint.pprint(stream=generator_stream)
