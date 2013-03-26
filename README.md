@@ -12,4 +12,5 @@ Dev version docs: https://freeze.readthedocs.org/en/dev/
 TODO
 ----
 
-* tree_diff would breadth-first improve readability?
+* Would using generators everywhere improve anything? Difflib supports
+  generators, so we might save some memory creating diffs?!

@@ -517,31 +517,40 @@ def _flatten_helper(iterable, pathlist, path, parent_index=False):
             index += 1
 
 
+def _whitespace(count):
+    ret = []
+    for it in range(count):
+        ret.append(" ")
+    return "".join(ret)
+
+
 def _traverse(data_structure):
     result = list()
 
     def traverse_helper(data_structure, depth):
+        pre_white = _whitespace(depth)
         if isinstance(data_structure, tuple):
-            result.append("                                                  "
-                          "-- depth: %d" % depth)
+            post_white = _whitespace(70 - depth)
+            result.append("%s(%s%4d" % (pre_white, post_white, depth))
             for item in data_structure:
                 traverse_helper(item, depth + 1)
-            result.append("                                                  "
-                          "-- up")
+            result.append("%s)%s%4d" % (pre_white, post_white, depth))
             return
-        result.append(data_structure)
+        result.append("%s%s" % (pre_white, data_structure))
     traverse_helper(data_structure, 0)
     return result
 
 
 def tree_diff(a, b, n=5, deterministic=True):
     """Freeze and stringify any data-structure or object, traverse
-    it depth-first and apply a unified diff.
+    it depth-first in-order and apply a unified diff.
+
+    Depth-first in-order is just like structure would be printed.
 
     Annotation:
 
-    "-- depth: x" Going down to level: x
-    "-- up"       Going one level up
+    "(           x"       Going down to level: x
+    ")           x"       Going one level up from: x
 
     :param             a: data_structure a
     :param             b: data_structure b
@@ -617,11 +626,11 @@ def tree_diff(a, b, n=5, deterministic=True):
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)
     if deterministic:
-        a = _traverse(a)
-        b = _traverse(b)
+        a = vformat(a).split("\n")
+        b = vformat(b).split("\n")
     else:
-        a = _traverse(_recursive_sort(a))
-        b = _traverse(_recursive_sort(b))
+        a = vformat(_recursive_sort(a)).split("\n")
+        b = vformat(_recursive_sort(b)).split("\n")
     return "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
 
 
@@ -638,11 +647,11 @@ def tree_diff_assert(a, b, n=5, deterministic=True):
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)
     if deterministic:
-        a = _traverse(a)
-        b = _traverse(b)
+        a = vformat(a).split("\n")
+        b = vformat(b).split("\n")
     else:
-        a = _traverse(_recursive_sort(a))
-        b = _traverse(_recursive_sort(b))
+        a = vformat(_recursive_sort(a)).split("\n")
+        b = vformat(_recursive_sort(b)).split("\n")
     msg = "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
     if len(msg) != 0:
         assert False, "difference: \n%s" % msg
@@ -765,6 +774,9 @@ class TransparentRepr(object):
         else:
             return super(TransparentRepr, self).__repr__()
 
+    def split(self, *args, **kwargs):
+        return self.repr_str.split(*args, **kwargs)
+
 
 def transparent_repr(string):
     """The result is __repr__ transparent. Non-printable
@@ -777,7 +789,7 @@ def vformat(*args, **kwargs):
     data-structures. The result is __repr__ transparent. Non-printable
     characters won't be escaped"""
     return TransparentRepr(
-        pprint.pformat(*args, width=10, **kwargs)
+        pprint.pformat(*args, width=1, **kwargs)
     )
 
 
