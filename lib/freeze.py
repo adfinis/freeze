@@ -517,30 +517,6 @@ def _flatten_helper(iterable, pathlist, path, parent_index=False):
             index += 1
 
 
-def _whitespace(count):
-    ret = []
-    for it in range(count):
-        ret.append(" ")
-    return "".join(ret)
-
-
-def _traverse(data_structure):
-    result = list()
-
-    def traverse_helper(data_structure, depth):
-        pre_white = _whitespace(depth)
-        if isinstance(data_structure, tuple):
-            post_white = _whitespace(70 - depth)
-            result.append("%s(%s%4d" % (pre_white, post_white, depth))
-            for item in data_structure:
-                traverse_helper(item, depth + 1)
-            result.append("%s)%s%4d" % (pre_white, post_white, depth))
-            return
-        result.append("%s%s" % (pre_white, data_structure))
-    traverse_helper(data_structure, 0)
-    return result
-
-
 def tree_diff(a, b, n=5, deterministic=True):
     """Freeze and stringify any data-structure or object, traverse
     it depth-first in-order and apply a unified diff.
