@@ -736,21 +736,13 @@ def frozen_equal_assert(a, b, deterministic=True):
                     )
 
 
-class TransparentRepr(object):
+class TransparentRepr(str):
     """That doctest calls __repr__ is very annoying, you can't follow PEP8
     on large objects. TransparentRepr makes string represent itself
     including all non-printable characters."""
-    def __init__(self, repr_str):
-        self.repr_str = repr_str
 
     def __repr__(self):
-        if isinstance(self.repr_str, six.string_types):
-            return self.repr_str
-        else:
-            return super(TransparentRepr, self).__repr__()
-
-    def split(self, *args, **kwargs):
-        return self.repr_str.split(*args, **kwargs)
+        return self
 
 
 def transparent_repr(string):
