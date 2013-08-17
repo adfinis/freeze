@@ -41,7 +41,6 @@ Run doctests by with "python lib/freeze.py"
 
 
 import six
-import pickle
 import pprint
 import sys
 import difflib
@@ -56,17 +55,10 @@ __all__ = [
     "tree_diff",
     "flatten",
     "frozen_equal_assert",
-    "pickle_protocol",
     "vformat",
     "transparent_repr"
 ]
 
-
-# Setting the pickle protocol python2/3 compat
-try:
-    pickle_protocol = pickle.DEFAULT_PROTOCOL
-except:
-    pickle_protocol = pickle.HIGHEST_PROTOCOL
 
 try:
     _ignore_types = (six.string_types, tuple, bytes)
@@ -262,6 +254,7 @@ def _recursive_sort(data_structure, assume_key=False):
                         x,
                         assume_key=assume_key
                     ) for x in data_structure],
+                    key=lambda x: repr(x),
                 ))
     return data_structure
 
@@ -388,10 +381,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 else:
                     return tuple(sorted(
                         [freeze_stable_helper(x) for x in data_structure],
-                        key=lambda x: pickle.dumps(
-                            x,
-                            protocol=pickle_protocol
-                        )
+                        key=lambda x: repr(x)
                     ))
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
@@ -758,6 +748,5 @@ if __name__ == "__main__":
     import doctest
     import json
     import gzip
-    pickle_protocol = 2
     result = doctest.testmod()
     sys.exit(result.failed)
