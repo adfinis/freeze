@@ -616,11 +616,6 @@ def _flatten_helper(iterable, pathlist, path, parent_index=False):
         # We have a list
         index = 0
         for item in iterable:
-            sublen = -1
-            try:
-                sublen = len(item)
-            except:
-                pass
             _flatten_helper(
                 item,
                 pathlist,
