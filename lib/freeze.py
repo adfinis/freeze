@@ -239,6 +239,7 @@ def freeze_fast(data_structure):
 
 
 def _recursive_sort(data_structure, assume_key=False):
+    """Will only work with stringified data_structures"""
     # We don't sort strings
     if not isinstance(data_structure, _string_types):
         tlen = -1
@@ -261,16 +262,18 @@ def _recursive_sort(data_structure, assume_key=False):
                         x,
                         assume_key=assume_key
                     ) for x in data_structure],
-                    key=lambda x: pickle.dumps(
-                        x,
-                        protocol=pickle_protocol
-                    )
                 ))
     return data_structure
 
 
-def freeze_stable(data_structure, assume_key=False, stringify=False):
+def freeze_stable(data_structure, assume_key=False, stringify=True):
     """Like freeze but results are stable regarding sorting.
+
+    UNLIKE the other freeze variants stringify is set True by default.  Because
+    freeze_stable should only be used as a helper in testing, freeze_stable
+    uses the better and faster stringify method. If you actually have an
+    application other than testing feel free to set stringify to False. But be
+    warned, it is slow!
 
     The stable functionality changes the datestructure (sorting)!
     For deterministic results don't use stable. If a two structures
@@ -281,8 +284,6 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     key-value pairs and doesn't sort them. This approximation usually
     creates smaller structures for flatten and a smaller
     difference when comparing two flattened structures.
-
-    stringify allow to freeze_stable anything.
 
     :param   data_structure: The structure to convert
     :param       assume_key: Assume that substructures of len() == 2
@@ -297,7 +298,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ])
+    ... ], stringify=False)
     >>> a
     ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
 
@@ -306,7 +307,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     ...     'a',
     ...     [4, 3],
     ...     {'a': [{'w' : set([4, '3', frozenset([3,5,2])])}, 3]},
-    ... ])
+    ... ], stringify=False)
     >>> b
     ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
 
@@ -315,7 +316,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     >>> a == b
     True
 
-    >>> b"sdf" == freeze_stable({3: b"sdf", 4: 245234534})[1][1]
+    >>> b"sdf" == freeze_stable({3: b"sdf", 4: 245234534}, stringify=False)[1][1]
     True
 
     >>> a = freeze_stable([
@@ -325,7 +326,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     ...     []
     ... ], stringify=True)
     >>> a
-    ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
+    ('a', (), (3, 4), (('a', (3, (('w', (4, '3', (2, 3, 5))),))),))
     >>> a = freeze_stable([
     ...     'a',
     ...     [5, 4],
@@ -333,7 +334,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
     ...     []
     ... ], stringify=True, assume_key=True)
     >>> a
-    ((), (5, 4), 'a', (('a', (3, (('w', ((2, 3, 5), 4, '3')),))),))
+    ('a', (), (5, 4), (('a', (3, (('w', (4, '3', (2, 3, 5))),))),))
     """
 
     if not stringify:
@@ -467,63 +468,6 @@ def recursive_hash(data_structure):
     return hash(data_structure)
 
 
-def _flatten_helper(iterable, pathlist, path, parent_index=False):
-    # Do not iterate over strings
-    if isinstance(iterable, _string_types):
-        path.append(iterable)
-        pathlist.append("/".join(path))
-    else:
-        tlen = -1
-        # If the item has a length we flatten it
-        try:
-            tlen = len(iterable)
-        except:
-            pass
-        if tlen == -1:
-            # We are done
-            path.append(str(iterable))
-            pathlist.append("/".join(path))
-            return
-        if tlen == 0:
-            # A empty tuple marks a empty iterable
-            path.append("()")
-            pathlist.append("/".join(path))
-            return
-        # If we have a tuple (length 2) we try to use
-        # the first item as key
-        if tlen == 2:
-            sublen = -1
-            try:
-                sublen = len(iterable[0])
-            except:
-                pass
-            if sublen == -1 or isinstance(iterable[0], _string_types):
-                # If the parent is an index, we don't need it since we
-                # have a key.
-                if parent_index:
-                    del path[-1]
-                _flatten_helper(
-                    iterable[1],
-                    pathlist,
-                    path + [str(iterable[0])]
-                )
-                return
-        # We have a list
-        index = 0
-        for item in iterable:
-            sublen = -1
-            try:
-                sublen = len(item)
-            except:
-                pass
-            _flatten_helper(
-                item,
-                pathlist,
-                path + [str(index)],
-                parent_index=True
-            )
-            index += 1
-
 
 def tree_diff(a, b, n=5, deterministic=True):
     """Freeze and stringify any data-structure or object, traverse
@@ -632,6 +576,58 @@ def tree_diff_assert(a, b, n=5, deterministic=True):
         assert False, "difference: \n%s" % msg
 
 
+def _flatten_helper(iterable, pathlist, path, parent_index=False):
+    # Do not iterate over strings
+    if isinstance(iterable, _string_types):
+        path.append(iterable)
+        pathlist.append("/".join(path))
+    else:
+        tlen = -1
+        # If the item has a length we flatten it
+        try:
+            tlen = len(iterable)
+        except:
+            pass
+        if tlen == -1:
+            # We are done
+            path.append(str(iterable))
+            pathlist.append("/".join(path))
+            return
+        if tlen == 0:
+            # A empty tuple marks a empty iterable
+            path.append("()")
+            pathlist.append("/".join(path))
+            return
+        # If we have a tuple (length 2) we try to use
+        # the first item as key
+        if tlen == 2:
+            # If the parent is an index, we don't need it since we
+            # have a key.
+            if parent_index:
+                del path[-1]
+            _flatten_helper(
+                iterable[1],
+                pathlist,
+                path + [str(iterable[0])]
+            )
+            return
+        # We have a list
+        index = 0
+        for item in iterable:
+            sublen = -1
+            try:
+                sublen = len(item)
+            except:
+                pass
+            _flatten_helper(
+                item,
+                pathlist,
+                path + [str(index)],
+                parent_index=True
+            )
+            index += 1
+
+
 def flatten(data_structure, assume_key=True):
     """Converts a data-structure to a flat set of paths.
     It makes it easier to comapre data-structures in unittests.
@@ -654,14 +650,14 @@ def flatten(data_structure, assume_key=True):
     ... ]
     >>> flat_one = flatten(test_one)
     >>> vformat(flat_one)
-    ['/0/()',
+    ['/0/a',
+     '/1/()',
      '/3/4',
-     '/2/a',
-     '/3/a/3/w/0/0/2',
-     '/3/a/3/w/0/1/3',
-     '/3/a/3/w/0/2/5',
-     '/3/a/3/w/1/4',
-     '/3/a/3/w/2/3']
+     '/3/a/3/w/0/4',
+     '/3/a/3/w/1/3',
+     '/3/a/3/w/2/0/2',
+     '/3/a/3/w/2/1/3',
+     '/3/a/3/w/2/2/5']
 
     >>> test_two = [
     ...    'a',
@@ -671,14 +667,14 @@ def flatten(data_structure, assume_key=True):
     ... ]
     >>> flat_two = flatten(test_two)
     >>> vformat(flat_two)
-    ['/0/()',
+    ['/0/a',
+     '/1/()',
      '/3/4',
-     '/2/a',
-     '/3/a/3/w/0/0/2',
-     '/3/a/3/w/0/1/3',
-     '/3/a/3/w/0/2/5',
-     '/3/a/3/w/1/4',
-     '/3/a/3/w/2/3']
+     '/3/a/3/w/0/4',
+     '/3/a/3/w/1/3',
+     '/3/a/3/w/2/0/2',
+     '/3/a/3/w/2/1/3',
+     '/3/a/3/w/2/2/5']
 
      >>> len(set(flat_one) - set(flat_two))
      0
@@ -687,7 +683,8 @@ def flatten(data_structure, assume_key=True):
 
     _flatten_helper(freeze_stable(
         data_structure,
-        assume_key=assume_key
+        assume_key=assume_key,
+        stringify=True
     ), pathlist, [''])
     return pathlist
 
@@ -709,9 +706,9 @@ def frozen_equal_assert(a, b, deterministic=True):
     """
 
     if not deterministic:
-        freeze_func = lambda x: freeze_stable(x, assume_key=True)
+        freeze_func = lambda x: freeze_stable(x, assume_key=True, stringify=True)
     else:
-        freeze_func = freeze
+        freeze_func = lambda x: freeze(x, stringify=True)
     a = freeze_func(a)
     b = freeze_func(b)
     # If a == b we are save anyway
