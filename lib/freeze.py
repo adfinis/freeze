@@ -316,7 +316,10 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     >>> a == b
     True
 
-    >>> b"sdf" == freeze_stable({3: b"sdf", 4: 245234534}, stringify=False)[1][1]
+    >>> b"sdf" == freeze_stable(
+    ...     {3: b"sdf", 4: 245234534},
+    ...     stringify=False
+    ... )[1][1]
     True
 
     >>> a = freeze_stable([
@@ -466,7 +469,6 @@ def recursive_hash(data_structure):
             hashs = tuple(recursive_hash(item) for item in data_structure)
             return hash(tuple(hashs))
     return hash(data_structure)
-
 
 
 def tree_diff(a, b, n=5, deterministic=True):
