@@ -164,7 +164,7 @@ def freeze(data_structure, stringify=False):
         # We don't freeze strings
         if not isinstance(data_structure, _string_types):
             tlen = -1
-            # If item has a length we frezze it
+            # If item has a length we freeze it
             try:
                 tlen = len(data_structure)
             except:
@@ -227,7 +227,7 @@ def freeze_fast(data_structure):
         # We don't freeze strings
         if not isinstance(data_structure, _string_types):
             tlen = -1
-            # If item has a length we frezze it
+            # If item has a length we freeze it
             try:
                 tlen = len(data_structure)
             except:
@@ -242,7 +242,7 @@ def _recursive_sort(data_structure, assume_key=False):
     # We don't sort strings
     if not isinstance(data_structure, _string_types):
         tlen = -1
-        # If item has a length we frezze it
+        # If item has a length we sort it
         try:
             tlen = len(data_structure)
         except:
@@ -371,7 +371,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=False):
         # We don't freeze strings
         if not isinstance(data_structure, _string_types):
             tlen = -1
-            # If item has a length we frezze it
+            # If item has a length we freeze it
             try:
                 tlen = len(data_structure)
             except:
@@ -428,7 +428,7 @@ def stable_hash(data_structure):
     # We don't iterate strings
     if not isinstance(data_structure, _string_types):
         tlen = -1
-        # If item has a length we frezze it
+        # If item has a length we freeze it
         try:
             tlen = len(data_structure)
         except:
@@ -456,7 +456,7 @@ def recursive_hash(data_structure):
     # We don't iterate strings
     if not isinstance(data_structure, _string_types):
         tlen = -1
-        # If item has a length we frezze it
+        # If item has a length we freeze it
         try:
             tlen = len(data_structure)
         except:
