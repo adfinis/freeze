@@ -707,7 +707,11 @@ def frozen_equal_assert(a, b, deterministic=True):
     """
 
     if not deterministic:
-        freeze_func = lambda x: freeze_stable(x, assume_key=True, stringify=True)
+        freeze_func = lambda x: freeze_stable(
+            x,
+            assume_key=True,
+            stringify=True
+        )
     else:
         freeze_func = lambda x: freeze(x, stringify=True)
     a = freeze_func(a)
