@@ -12,7 +12,8 @@ Freeze - hash / sort / compare / diff anything
 
 .. autosummary::
 
-   freeze
+   
+   freeze.freeze
    freeze.freeze_fast
    freeze.freeze_stable
    freeze.tree_diff_assert

@@ -27,4 +27,4 @@ Indices and tables
 * :ref:`search`
 """
 
-print(tmpl % "\n   freeze.".join(freeze.__all__))
+print(tmpl % "\n   freeze.".join([""] + freeze.__all__))
