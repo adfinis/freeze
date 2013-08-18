@@ -1,4 +1,6 @@
+import freeze
 
+tmpl = """
 .. freeze documentation master file, created by
    sphinx-quickstart on Fri Mar 22 02:27:13 2013.
    You can adapt this file completely to your liking, but it should at least
@@ -12,19 +14,7 @@ Freeze - hash / sort / compare / diff anything
 
 .. autosummary::
 
-   freeze
-   freeze.freeze_fast
-   freeze.freeze_stable
-   freeze.tree_diff_assert
-   freeze.stable_hash
-   freeze.recursive_hash
-   freeze.tree_diff
-   freeze.flatten
-   freeze.frozen_equal_assert
-   freeze.vformat
-   freeze.transparent_repr
-   freeze.traverse_frozen_data
-   freeze.TraversalBasedReprCompare
+   %s
 
 .. automodule:: freeze
    :members:
@@ -35,4 +25,6 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+"""
 
+print(tmpl % "\n   freeze.".join(freeze.__all__))
