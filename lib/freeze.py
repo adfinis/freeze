@@ -88,23 +88,25 @@ def freeze(data_structure, stringify=False):
     :param        stringify: Stringify all non-primitive leaves
     :type         stringify: bool
 
-    >>> freeze([
+    We need freeze stable to test this across python versions. It doesn't make
+    too much sense, but at least there are some tests.
+    >>> freeze(freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ])
-    ('a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),), ())
+    ... ]))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
-    >>> freeze([
+    >>> freeze(freeze_stable([
     ...     [],
     ...     'a',
     ...     [3, 4],
-    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
-    ... ])
-    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,1,2])])}]},
+    ... ]))
+    ((), (((((('3', (1, 2, 3), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
-    >>> b"sdf" == freeze({3: b"sdf", 4: 245234534})[0][1]
+    >>> b"sdf" == freeze([[3, b"sdf"], [4, 245234534]])[0][1]
     True
 
     >>> testdata = json.loads(
@@ -187,23 +189,32 @@ def freeze_fast(data_structure):
 
     :param   data_structure: The structure to convert
 
-    >>> freeze_fast([
+    We need freeze stable to test this across python versions. It doesn't make
+    too much sense, but at least there are some tests.
+    >>> freeze_fast(freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ])
-    ('a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),), ())
+    ... ]))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
+
+    >>> freeze_fast(freeze_stable([
+    ...     [],
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ... ]))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
     >>> freeze_fast([
     ...     [],
     ...     'a',
     ...     [3, 4],
-    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
-    ... ])
-    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
+    ...     ['a', [3, ['w', [4, '3']]]]])
+    ((), 'a', (3, 4), ('a', (3, ('w', (4, '3')))))
 
-    >>> b"sdf" == freeze_fast({3: b"sdf", 4: 245234534})[0][1]
+    >>> b"sdf" == freeze_fast([[3, b"sdf"], [4, 245234534]])[0][1]
     True
     """
     def freeze_fast_helper(data_structure):
@@ -310,7 +321,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     True
 
     >>> b"sdf" == freeze_stable(
-    ...     {3: b"sdf", 4: 245234534},
+    ...     [[3, b"sdf"], [4, 245234534]],
     ...     stringify=False
     ... )[1][1]
     True
@@ -477,61 +488,60 @@ def tree_diff(a, b, n=5, deterministic=True):
     :param             n: lines of context
     :type              n: int
 
-
-    >>> a = [
+    We need freeze stable to test this across python versions. It doesn't make
+    too much sense, but at least there are some tests.
+    >>> a = freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ]
-    >>> b = [
+    ... ])
+    >>> b = freeze_stable([
     ...     'a',
-    ...     [4, 3],
+    ...     [7, 3],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
     ...     []
-    ... ]
+    ... ])
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
-    @@ -1,8 +1,8 @@
-     ('a',
-    - (3,
-    -  4),
-    + (4,
-    +  3),
-      (('a',
-        (3,
-         (('w',
-           ((2,
-             3,
+    @@ -7,6 +7,6 @@
+           'w'),),
+         3),
+        'a'),),
+      'a',
+      (3,
+    -  4))
+    +  7))
 
-    >>> a = [
+    >>> a = freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, 'tree', frozenset([3,5,2])])}]},
     ...     []
-    ... ]
-    >>> b = [
+    ... ])
+    >>> b = freeze_stable([
     ...     'a',
     ...     [4, 3],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
     ...     []
-    ... ]
+    ... ])
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
     @@ -1,12 +1,12 @@
-     ('a',
-    - (3,
-    -  4),
-    + (4,
-    +  3),
-      (('a',
-        (3,
-         (('w',
-           ((2,
+     ((),
+    - 'a',
+    - (('a',
+    -   (((('tree',
+    + (((((('3',
+            (2,
              3,
              5),
-    -       'tree',
-    +       '3',
-            4)),))),),
-      ())
+            4),
+           'w'),),
+    -    3)),),
+    +    3),
+    +   'a'),),
+    + 'a',
+      (3,
+       4))
 
     """
     a = freeze(a, stringify=True)
