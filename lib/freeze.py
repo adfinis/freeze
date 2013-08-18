@@ -265,8 +265,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     UNLIKE the other freeze variants stringify is set True by default.  Because
     freeze_stable should only be used as a helper in testing, freeze_stable
     uses the better and faster stringify method. If you actually have an
-    application other than testing feel free to set stringify to False. But be
-    warned, it is slow!
+    application other than testing feel free to set stringify to False.
 
     The stable functionality changes the datestructure (sorting)!
     For deterministic results don't use stable. If a two structures
