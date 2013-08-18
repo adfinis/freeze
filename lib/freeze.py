@@ -56,7 +56,8 @@ __all__ = [
     "flatten",
     "frozen_equal_assert",
     "vformat",
-    "transparent_repr"
+    "transparent_repr",
+    "traverse_frozen_data",
 ]
 
 
@@ -254,7 +255,7 @@ def _recursive_sort(data_structure, assume_key=False):
                         x,
                         assume_key=assume_key
                     ) for x in data_structure],
-                    key=lambda x: repr(x),
+                    key=lambda x: TraversalBasedReprComapre(x),
                 ))
     return data_structure
 
@@ -292,7 +293,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=False)
     >>> a
-    ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
+    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
 
     >>> b = freeze_stable([
     ...     [],
@@ -301,7 +302,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     {'a': [{'w' : set([4, '3', frozenset([3,5,2])])}, 3]},
     ... ], stringify=False)
     >>> b
-    ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
+    ((), 'a', (4, 3), (('a', ((('w', ((2, 3, 5), '3', 4)),), 3)),))
 
     a is the same as b!!
 
@@ -321,7 +322,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=True)
     >>> a
-    ('a', (), (3, 4), (('a', (3, (('w', (4, '3', (2, 3, 5))),))),))
+    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
     >>> a = freeze_stable([
     ...     'a',
     ...     [5, 4],
@@ -329,7 +330,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=True, assume_key=True)
     >>> a
-    ('a', (), (5, 4), (('a', (3, (('w', (4, '3', (2, 3, 5))),))),))
+    ((), 'a', (5, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
     """
 
     if not stringify:
@@ -380,7 +381,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 else:
                     return tuple(sorted(
                         [freeze_stable_helper(x) for x in data_structure],
-                        key=lambda x: repr(x)
+                        key=lambda x: TraversalBasedReprComapre(x)
                     ))
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
@@ -636,14 +637,14 @@ def flatten(data_structure, assume_key=True):
     ... ]
     >>> flat_one = flatten(test_one)
     >>> vformat(flat_one)
-    ['/0/a',
-     '/1/()',
+    ['/0/()',
+     '/1/a',
      '/3/4',
-     '/3/a/3/w/0/4',
+     '/3/a/3/w/0/0/2',
+     '/3/a/3/w/0/1/3',
+     '/3/a/3/w/0/2/5',
      '/3/a/3/w/1/3',
-     '/3/a/3/w/2/0/2',
-     '/3/a/3/w/2/1/3',
-     '/3/a/3/w/2/2/5']
+     '/3/a/3/w/2/4']
 
     >>> test_two = [
     ...    'a',
@@ -653,14 +654,14 @@ def flatten(data_structure, assume_key=True):
     ... ]
     >>> flat_two = flatten(test_two)
     >>> vformat(flat_two)
-    ['/0/a',
-     '/1/()',
+    ['/0/()',
+     '/1/a',
      '/3/4',
-     '/3/a/3/w/0/4',
+     '/3/a/3/w/0/0/2',
+     '/3/a/3/w/0/1/3',
+     '/3/a/3/w/0/2/5',
      '/3/a/3/w/1/3',
-     '/3/a/3/w/2/0/2',
-     '/3/a/3/w/2/1/3',
-     '/3/a/3/w/2/2/5']
+     '/3/a/3/w/2/4']
 
      >>> len(set(flat_one) - set(flat_two))
      0
@@ -741,6 +742,77 @@ def vformat(*args, **kwargs):
     return TransparentRepr(
         pprint.pformat(*args, width=1, **kwargs)
     )
+
+
+def traverse_frozen_data(data_structure):
+    """Yields the leaves of the frozen data-structure pre-order.
+
+    It will produce the same order as one would write data-structure."""
+    parent_stack = [data_structure]
+    while parent_stack:
+        node = parent_stack.pop(0)
+        # We don't iterate strings
+        tlen = -1
+        if not isinstance(node, _string_types):
+            # If item has a length we freeze it
+            try:
+                tlen = len(node)
+            except:
+                pass
+        if tlen == -1:
+            yield node
+        else:
+            parent_stack = list(node) + parent_stack
+
+
+#TODO: example
+class TraversalBasedReprComapre(object):
+    """Implements the comparison method for frozen data-structures based on
+    traverse_frozen_data.
+
+    >>> cmp = TraversalBasedReprComapre
+    >>> cmp(3) < cmp(4)
+    True"""
+
+    def __init__(self, payload):
+        """Initialize a payload (usually a key) for comparison"""
+        self.payload   = payload
+
+    def _cmp(self, other):
+        """Generic cmp method to support python 2/3"""
+        self_gen  = traverse_frozen_data(self.payload)
+        other_gen = traverse_frozen_data(other.payload)
+        while True:
+            try:
+                self_node  = repr(next(self_gen))
+            except StopIteration:
+                self_node  = None
+            try:
+                other_node = repr(next(other_gen))
+            except StopIteration:
+                other_node = None
+            if self_node is None or other_node is None:
+                # We iterated to the end
+                if self_node is not None:
+                    return 1
+                if other_node is not None:
+                    return -1
+                return 0
+            if self_node != other_node:
+                return (
+                    self_node > other_node
+                ) - (
+                    other_node < self_node
+                )
+
+    def __lt__(self, other):
+        return self._cmp(other) < 0
+
+    def __eq__(self, other):
+        return self._cmp(other) == 0
+
+    def __cmp__(self, other):
+        return self._cmp(other)
 
 
 if __name__ == "__main__":
