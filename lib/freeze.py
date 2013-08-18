@@ -56,7 +56,8 @@ __all__ = [
     "flatten",
     "frozen_equal_assert",
     "vformat",
-    "transparent_repr"
+    "transparent_repr",
+    "traverse_frozen_data",
 ]
 
 
@@ -87,23 +88,25 @@ def freeze(data_structure, stringify=False):
     :param        stringify: Stringify all non-primitive leaves
     :type         stringify: bool
 
-    >>> freeze([
+    We need freeze stable to test this across python versions. It doesn't make
+    too much sense, but at least there are some tests.
+    >>> freeze(freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ])
-    ('a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),), ())
+    ... ]))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
-    >>> freeze([
+    >>> freeze(freeze_stable([
     ...     [],
     ...     'a',
     ...     [3, 4],
-    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
-    ... ])
-    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,1,2])])}]},
+    ... ]))
+    ((), (((((('3', (1, 2, 3), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
-    >>> b"sdf" == freeze({3: b"sdf", 4: 245234534})[0][1]
+    >>> b"sdf" == freeze([[3, b"sdf"], [4, 245234534]])[0][1]
     True
 
     >>> testdata = json.loads(
@@ -186,23 +189,32 @@ def freeze_fast(data_structure):
 
     :param   data_structure: The structure to convert
 
-    >>> freeze_fast([
+    We need freeze stable to test this across python versions. It doesn't make
+    too much sense, but at least there are some tests.
+    >>> freeze_fast(freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ])
-    ('a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),), ())
+    ... ]))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
+
+    >>> freeze_fast(freeze_stable([
+    ...     [],
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ... ]))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
     >>> freeze_fast([
     ...     [],
     ...     'a',
     ...     [3, 4],
-    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
-    ... ])
-    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
+    ...     ['a', [3, ['w', [4, '3']]]]])
+    ((), 'a', (3, 4), ('a', (3, ('w', (4, '3')))))
 
-    >>> b"sdf" == freeze_fast({3: b"sdf", 4: 245234534})[0][1]
+    >>> b"sdf" == freeze_fast([[3, b"sdf"], [4, 245234534]])[0][1]
     True
     """
     def freeze_fast_helper(data_structure):
@@ -254,7 +266,7 @@ def _recursive_sort(data_structure, assume_key=False):
                         x,
                         assume_key=assume_key
                     ) for x in data_structure],
-                    key=lambda x: repr(x),
+                    key=lambda x: TraversalBasedReprComapre(x),
                 ))
     return data_structure
 
@@ -292,7 +304,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=False)
     >>> a
-    ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
     >>> b = freeze_stable([
     ...     [],
@@ -301,7 +313,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     {'a': [{'w' : set([4, '3', frozenset([3,5,2])])}, 3]},
     ... ], stringify=False)
     >>> b
-    ((), (((((((2, 3, 5), 4, '3'), 'w'),), 3), 'a'),), (3, 4), 'a')
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
     a is the same as b!!
 
@@ -309,7 +321,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     True
 
     >>> b"sdf" == freeze_stable(
-    ...     {3: b"sdf", 4: 245234534},
+    ...     [[3, b"sdf"], [4, 245234534]],
     ...     stringify=False
     ... )[1][1]
     True
@@ -321,7 +333,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=True)
     >>> a
-    ('a', (), (3, 4), (('a', (3, (('w', (4, '3', (2, 3, 5))),))),))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
     >>> a = freeze_stable([
     ...     'a',
     ...     [5, 4],
@@ -329,7 +341,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=True, assume_key=True)
     >>> a
-    ('a', (), (5, 4), (('a', (3, (('w', (4, '3', (2, 3, 5))),))),))
+    ((), 'a', (('a', (3, (('w', ('3', (2, 3, 5), 4)),))),), (5, 4))
     """
 
     if not stringify:
@@ -380,7 +392,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 else:
                     return tuple(sorted(
                         [freeze_stable_helper(x) for x in data_structure],
-                        key=lambda x: repr(x)
+                        key=lambda x: TraversalBasedReprComapre(x)
                     ))
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
@@ -476,61 +488,60 @@ def tree_diff(a, b, n=5, deterministic=True):
     :param             n: lines of context
     :type              n: int
 
-
-    >>> a = [
+    We need freeze stable to test this across python versions. It doesn't make
+    too much sense, but at least there are some tests.
+    >>> a = freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
     ...     []
-    ... ]
-    >>> b = [
+    ... ])
+    >>> b = freeze_stable([
     ...     'a',
-    ...     [4, 3],
+    ...     [7, 3],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
     ...     []
-    ... ]
+    ... ])
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
-    @@ -1,8 +1,8 @@
-     ('a',
-    - (3,
-    -  4),
-    + (4,
-    +  3),
-      (('a',
-        (3,
-         (('w',
-           ((2,
-             3,
+    @@ -7,6 +7,6 @@
+           'w'),),
+         3),
+        'a'),),
+      'a',
+      (3,
+    -  4))
+    +  7))
 
-    >>> a = [
+    >>> a = freeze_stable([
     ...     'a',
     ...     [3, 4],
     ...     {'a': [3, {'w' : set([4, 'tree', frozenset([3,5,2])])}]},
     ...     []
-    ... ]
-    >>> b = [
+    ... ])
+    >>> b = freeze_stable([
     ...     'a',
     ...     [4, 3],
     ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
     ...     []
-    ... ]
+    ... ])
     >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
     @@ -1,12 +1,12 @@
-     ('a',
-    - (3,
-    -  4),
-    + (4,
-    +  3),
-      (('a',
-        (3,
-         (('w',
-           ((2,
+     ((),
+    - 'a',
+    - (('a',
+    -   (((('tree',
+    + (((((('3',
+            (2,
              3,
              5),
-    -       'tree',
-    +       '3',
-            4)),))),),
-      ())
+            4),
+           'w'),),
+    -    3)),),
+    +    3),
+    +   'a'),),
+    + 'a',
+      (3,
+       4))
 
     """
     a = freeze(a, stringify=True)
@@ -636,14 +647,14 @@ def flatten(data_structure, assume_key=True):
     ... ]
     >>> flat_one = flatten(test_one)
     >>> vformat(flat_one)
-    ['/0/a',
-     '/1/()',
-     '/3/4',
-     '/3/a/3/w/0/4',
-     '/3/a/3/w/1/3',
-     '/3/a/3/w/2/0/2',
-     '/3/a/3/w/2/1/3',
-     '/3/a/3/w/2/2/5']
+    ['/0/()',
+     '/1/a',
+     '/2/a/3/w/0/3',
+     '/2/a/3/w/1/0/2',
+     '/2/a/3/w/1/1/3',
+     '/2/a/3/w/1/2/5',
+     '/2/a/3/w/2/4',
+     '/3/4']
 
     >>> test_two = [
     ...    'a',
@@ -653,14 +664,14 @@ def flatten(data_structure, assume_key=True):
     ... ]
     >>> flat_two = flatten(test_two)
     >>> vformat(flat_two)
-    ['/0/a',
-     '/1/()',
-     '/3/4',
-     '/3/a/3/w/0/4',
-     '/3/a/3/w/1/3',
-     '/3/a/3/w/2/0/2',
-     '/3/a/3/w/2/1/3',
-     '/3/a/3/w/2/2/5']
+    ['/0/()',
+     '/1/a',
+     '/2/a/3/w/0/3',
+     '/2/a/3/w/1/0/2',
+     '/2/a/3/w/1/1/3',
+     '/2/a/3/w/1/2/5',
+     '/2/a/3/w/2/4',
+     '/3/4']
 
      >>> len(set(flat_one) - set(flat_two))
      0
@@ -741,6 +752,94 @@ def vformat(*args, **kwargs):
     return TransparentRepr(
         pprint.pformat(*args, width=1, **kwargs)
     )
+
+
+def traverse_frozen_data(data_structure):
+    """Yields the leaves of the frozen data-structure pre-order.
+
+    It will produce the same order as one would write data-structure."""
+    parent_stack = [data_structure]
+    while parent_stack:
+        node = parent_stack.pop(0)
+        # We don't iterate strings
+        tlen = -1
+        if not isinstance(node, _string_types):
+            # If item has a length we freeze it
+            try:
+                tlen = len(node)
+            except:
+                pass
+        if tlen == -1:
+            yield node
+        else:
+            parent_stack = list(node) + parent_stack
+
+
+class TraversalBasedReprComapre(object):
+    """Implements the comparison method for frozen data-structures based on
+    traverse_frozen_data.
+
+    >>> cm = TraversalBasedReprComapre
+    >>> cm(3) < cm(4)
+    True
+    >>> cm(4) > cm(3)
+    True
+    >>> cm(3) > cm(4)
+    False
+    >>> cm(3) == cm(3)
+    True
+    >>> cm(3) == cm(4)
+    False
+    >>> cm((3, 3)) > cm((3,))
+    True
+    >>> cm((3, 3)) == cm((3, 3))
+    True
+    >>> cm((3,)) > cm((3, 3))
+    False
+    >>> cm((3,)) == cm((3, 3))
+    False
+    """
+
+    def __init__(self, payload):
+        """Initialize a payload (usually a key) for comparison"""
+        self.payload   = payload
+
+    def _cmp(self, other):
+        """Generic cmp method to support python 2/3"""
+        #import pdb; pdb.set_trace()
+        self_gen  = traverse_frozen_data(self.payload)
+        other_gen = traverse_frozen_data(other.payload)
+        while True:
+            try:
+                self_node  = repr(next(self_gen))
+            except StopIteration:
+                self_node  = None
+            try:
+                other_node = repr(next(other_gen))
+            except StopIteration:
+                other_node = None
+            if self_node is None or other_node is None:
+                # We iterated to the end
+                if self_node is not None:
+                    return 1
+                if other_node is not None:
+                    return -1
+                return 0
+            if self_node != other_node:
+                return (
+                    self_node > other_node
+                ) - (
+                    self_node < other_node
+                )
+
+    def __lt__(self, other):
+        return self._cmp(other) < 0
+
+    def __eq__(self, other):
+        return self._cmp(other) == 0
+
+    def __cmp__(self, other):
+        return self._cmp(other)
 
 
 if __name__ == "__main__":
