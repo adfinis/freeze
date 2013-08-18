@@ -58,6 +58,7 @@ __all__ = [
     "vformat",
     "transparent_repr",
     "traverse_frozen_data",
+    "TraversalBasedReprCompare",
 ]
 
 
@@ -266,7 +267,7 @@ def _recursive_sort(data_structure, assume_key=False):
                         x,
                         assume_key=assume_key
                     ) for x in data_structure],
-                    key=lambda x: TraversalBasedReprComapre(x),
+                    key=lambda x: TraversalBasedReprCompare(x),
                 ))
     return data_structure
 
@@ -392,7 +393,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 else:
                     return tuple(sorted(
                         [freeze_stable_helper(x) for x in data_structure],
-                        key=lambda x: TraversalBasedReprComapre(x)
+                        key=lambda x: TraversalBasedReprCompare(x)
                     ))
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
@@ -775,11 +776,11 @@ def traverse_frozen_data(data_structure):
             parent_stack = list(node) + parent_stack
 
 
-class TraversalBasedReprComapre(object):
+class TraversalBasedReprCompare(object):
     """Implements the comparison method for frozen data-structures based on
     traverse_frozen_data.
 
-    >>> cm = TraversalBasedReprComapre
+    >>> cm = TraversalBasedReprCompare
     >>> cm(3) < cm(4)
     True
     >>> cm(4) > cm(3)
