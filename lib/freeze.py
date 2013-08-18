@@ -91,6 +91,7 @@ def freeze(data_structure, stringify=False):
 
     We need freeze stable to test this across python versions. It doesn't make
     too much sense, but at least there are some tests.
+
     >>> freeze(freeze_stable([
     ...     'a',
     ...     [3, 4],
@@ -192,6 +193,7 @@ def freeze_fast(data_structure):
 
     We need freeze stable to test this across python versions. It doesn't make
     too much sense, but at least there are some tests.
+
     >>> freeze_fast(freeze_stable([
     ...     'a',
     ...     [3, 4],
@@ -491,6 +493,7 @@ def tree_diff(a, b, n=5, deterministic=True):
 
     We need freeze stable to test this across python versions. It doesn't make
     too much sense, but at least there are some tests.
+
     >>> a = freeze_stable([
     ...     'a',
     ...     [3, 4],

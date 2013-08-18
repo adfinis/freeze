@@ -7,7 +7,7 @@ Freeze - hash / sort / compare / diff anything
 ==============================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
 .. automodule:: freeze
    :members:
