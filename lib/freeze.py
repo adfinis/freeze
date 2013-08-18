@@ -293,7 +293,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=False)
     >>> a
-    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
     >>> b = freeze_stable([
     ...     [],
@@ -302,7 +302,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     {'a': [{'w' : set([4, '3', frozenset([3,5,2])])}, 3]},
     ... ], stringify=False)
     >>> b
-    ((), 'a', (4, 3), (('a', ((('w', ((2, 3, 5), '3', 4)),), 3)),))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
 
     a is the same as b!!
 
@@ -322,7 +322,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=True)
     >>> a
-    ((), 'a', (3, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
+    ((), (((((('3', (2, 3, 5), 4), 'w'),), 3), 'a'),), 'a', (3, 4))
     >>> a = freeze_stable([
     ...     'a',
     ...     [5, 4],
@@ -330,7 +330,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     []
     ... ], stringify=True, assume_key=True)
     >>> a
-    ((), 'a', (5, 4), (('a', (3, (('w', ((2, 3, 5), '3', 4)),))),))
+    ((), 'a', (('a', (3, (('w', ('3', (2, 3, 5), 4)),))),), (5, 4))
     """
 
     if not stringify:
@@ -639,12 +639,12 @@ def flatten(data_structure, assume_key=True):
     >>> vformat(flat_one)
     ['/0/()',
      '/1/a',
-     '/3/4',
-     '/3/a/3/w/0/0/2',
-     '/3/a/3/w/0/1/3',
-     '/3/a/3/w/0/2/5',
-     '/3/a/3/w/1/3',
-     '/3/a/3/w/2/4']
+     '/2/a/3/w/0/3',
+     '/2/a/3/w/1/0/2',
+     '/2/a/3/w/1/1/3',
+     '/2/a/3/w/1/2/5',
+     '/2/a/3/w/2/4',
+     '/3/4']
 
     >>> test_two = [
     ...    'a',
@@ -656,12 +656,12 @@ def flatten(data_structure, assume_key=True):
     >>> vformat(flat_two)
     ['/0/()',
      '/1/a',
-     '/3/4',
-     '/3/a/3/w/0/0/2',
-     '/3/a/3/w/0/1/3',
-     '/3/a/3/w/0/2/5',
-     '/3/a/3/w/1/3',
-     '/3/a/3/w/2/4']
+     '/2/a/3/w/0/3',
+     '/2/a/3/w/1/0/2',
+     '/2/a/3/w/1/1/3',
+     '/2/a/3/w/1/2/5',
+     '/2/a/3/w/2/4',
+     '/3/4']
 
      >>> len(set(flat_one) - set(flat_two))
      0
@@ -765,14 +765,30 @@ def traverse_frozen_data(data_structure):
             parent_stack = list(node) + parent_stack
 
 
-#TODO: example
 class TraversalBasedReprComapre(object):
     """Implements the comparison method for frozen data-structures based on
     traverse_frozen_data.
 
-    >>> cmp = TraversalBasedReprComapre
-    >>> cmp(3) < cmp(4)
-    True"""
+    >>> cm = TraversalBasedReprComapre
+    >>> cm(3) < cm(4)
+    True
+    >>> cm(4) > cm(3)
+    True
+    >>> cm(3) > cm(4)
+    False
+    >>> cm(3) == cm(3)
+    True
+    >>> cm(3) == cm(4)
+    False
+    >>> cm((3, 3)) > cm((3,))
+    True
+    >>> cm((3, 3)) == cm((3, 3))
+    True
+    >>> cm((3,)) > cm((3, 3))
+    False
+    >>> cm((3,)) == cm((3, 3))
+    False
+    """
 
     def __init__(self, payload):
         """Initialize a payload (usually a key) for comparison"""
@@ -780,6 +796,7 @@ class TraversalBasedReprComapre(object):
 
     def _cmp(self, other):
         """Generic cmp method to support python 2/3"""
+        #import pdb; pdb.set_trace()
         self_gen  = traverse_frozen_data(self.payload)
         other_gen = traverse_frozen_data(other.payload)
         while True:
@@ -802,7 +819,7 @@ class TraversalBasedReprComapre(object):
                 return (
                     self_node > other_node
                 ) - (
-                    other_node < self_node
+                    self_node < other_node
                 )
 
     def __lt__(self, other):
