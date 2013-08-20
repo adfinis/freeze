@@ -43,6 +43,8 @@ Run doctests by with "python lib/freeze.py"
 import six
 import pprint
 import sys
+import json
+import gzip
 import difflib
 
 __all__ = [
@@ -852,7 +854,5 @@ class TraversalBasedReprCompare(object):
 
 if __name__ == "__main__":
     import doctest
-    import json
-    import gzip
     result = doctest.testmod()
     sys.exit(result.failed)

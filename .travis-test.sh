@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-python lib/freeze.py
+nosetests --with-doctest --doctest-tests --cover-package=freeze --with-coverage --cover-tests --cover-erase --cover-min-percentage=100
