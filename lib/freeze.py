@@ -122,7 +122,7 @@ def freeze(data_structure, stringify=False):
 
     Hash anything!
 
-    >>> a = freeze(sys)
+    >>> a = freeze(sys, stringify=True)
     >>> len(a) > 0
     True
     >>> hash(a) != None
