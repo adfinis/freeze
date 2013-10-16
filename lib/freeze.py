@@ -131,18 +131,20 @@ def freeze(data_structure, stringify=False):
     ...     pass
     >>> a = A()
     >>> b = freeze([a, {"other": a}])
-    >>> "<class 'freeze.A'> at " in str(b)
+    >>> ("<class 'freeze.A'> at " in str(b) or
+    ... "<type 'instance'> at " in str(b))
     True
 
     >>> a = lambda a: a*a
     >>> b = freeze([a, {"other": a}])
-    >>> "<class 'function'> at " in str(b)
+    >>> ("<class 'function'> at " in str(b) or
+    ... "<type 'function'> at " in str(b))
     True
 
     # Testing builtings
 
-    >>> freeze([print])
-    ('<built-in function print>',)
+    >>> freeze([dir])
+    ('<built-in function dir>',)
     """
 
     identity_set = set()
@@ -346,12 +348,6 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     >>> a == b
     True
 
-    >>> b"sdf" == freeze_stable(
-    ...     [[3, b"sdf"], [4, 245234534]],
-    ...     stringify=False
-    ... )[1][1]
-    True
-
     >>> a = freeze_stable([
     ...     'a',
     ...     [3, 4],
@@ -375,18 +371,20 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     pass
     >>> a = A()
     >>> b = freeze_stable([a, {"other": a}], stringify=False)
-    >>> "<class 'freeze.A'> at " in str(b)
+    >>> ("<class 'freeze.A'> at " in str(b) or
+    ... "<type 'instance'> at " in str(b))
     True
 
     >>> a = lambda a: a*a
     >>> b = freeze_stable([a, {"other": a}], stringify=False)
-    >>> "<class 'function'> at " in str(b)
+    >>> ("<class 'function'> at " in str(b) or
+    ... "<type 'function'> at " in str(b))
     True
 
     # Testing builtings
 
-    >>> freeze_stable([print], stringify=False)
-    ('<built-in function print>',)
+    >>> freeze_stable([dir], stringify=False)
+    ('<built-in function dir>',)
 
 
     >>> freeze_stable({"a": "b"}, assume_key=True, stringify=False)
