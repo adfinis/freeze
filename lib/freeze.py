@@ -13,8 +13,6 @@ Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
 
 Run doctests by with "python lib/freeze.py"
 
-
-TODO!! Why is performance in python3.3 so bad??
 """
 
 # Copyright (c) 2012, Adfinis SyGroup AG
@@ -931,16 +929,10 @@ def frozen_equal_assert(a, b, deterministic=True):
     Testing case where flatten doen't find a diff
 
     >>> a = [
-    ...     'a',
-    ...     [3, 4, 1],
-    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
-    ...     []
+    ...     '3',
     ... ]
     >>> b = [
-    ...     'a',
-    ...     [3, 4, 1],
-    ...     {'a': [3, {'w' : set([4, 3, frozenset([3,5,2])])}]},
-    ...     []
+    ...     3,
     ... ]
     >>> try:
     ...     frozen_equal_assert(a, b, deterministic=True)

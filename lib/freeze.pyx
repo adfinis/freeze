@@ -1,3 +1,9 @@
+DO NOT USE
+
+This is just here to show my tests with cython, if someone has a great idea how
+to improve performance with cython see what here what I already tried.
+
+
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # vim: autoindent expandtab tabstop=4 sw=4 sts=4 filetype=python
@@ -856,7 +862,7 @@ cdef class TraversalBasedReprCompare(object):
                 )
 
     def __richcmp__(
-        TraversalBasedReprCompare self, 
+        TraversalBasedReprCompare self,
         TraversalBasedReprCompare other not None,
         int op
     ):
