@@ -12,6 +12,9 @@ very fast. freeze_stable and flatten are usable for testing and analysis.
 Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
 
 Run doctests by with "python lib/freeze.py"
+
+
+TODO!! Why is performance in python3.3 so bad??
 """
 
 # Copyright (c) 2012, Adfinis SyGroup AG
