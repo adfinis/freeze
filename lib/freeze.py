@@ -47,6 +47,11 @@ import json
 import gzip
 import difflib
 
+# These imports are need for doc tests.
+nothing = json.__file__
+nothing = gzip.__file__
+del nothing
+
 __all__ = [
     "freeze",
     "freeze_fast",
@@ -66,12 +71,12 @@ __all__ = [
 
 try:
     _ignore_types = (six.string_types, tuple, bytes)
-except: #pragma: no cover
+except:  # pragma: no cover
     _ignore_types = (six.string_types, tuple)
 
 try:
     _string_types = (six.string_types,  bytes)
-except: #pragma: no cover
+except:  # pragma: no cover
     _string_types = (six.string_types)
 
 _primitive_types = (int, float, bool)
@@ -287,7 +292,7 @@ def _recursive_sort(data_structure, assume_key=False):
                         x,
                         assume_key=assume_key
                     ) for x in data_structure],
-                    key=lambda x: TraversalBasedReprCompare(x),
+                    key=TraversalBasedReprCompare,
                 ))
     return data_structure
 
@@ -441,7 +446,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 else:
                     return tuple(sorted(
                         [freeze_stable_helper(x) for x in data_structure],
-                        key=lambda x: TraversalBasedReprCompare(x)
+                        key=TraversalBasedReprCompare
                     ))
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
@@ -922,7 +927,7 @@ def frozen_equal_assert(a, b, deterministic=True):
     ...     "GOT IT"
     'GOT IT'
 
-    Testing case where flatten doen't find a diff.
+    Testing case where flatten doen't find a diff
 
     >>> a = [
     ...     'a',
@@ -1092,3 +1097,4 @@ if __name__ == "__main__":  # pragma: no cover
     import doctest
     result = doctest.testmod()
     sys.exit(result.failed)
+# lint_ignore=W0702,R0912,R0911
