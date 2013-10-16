@@ -20,7 +20,7 @@ for many purposes for example implement __hash__ for your complex object
 very fast. freeze_stable and flatten are usable for testing and analysis.""",
     keywords = "freeze state hash sort compare unittest",
     url = "https://github.com/adfinis-sygroup/freeze",
-    download_url = "https://github.com/adfinis-sygroup/freeze/archive/freeze-0.1.0.tar.gz",
+    #download_url = "https://github.com/adfinis-sygroup/freeze/archive/freeze-0.1.0.tar.gz",
     #bugtrack_url = "https://github.com/adfinis-sygroup/freeze/issues",
     classifiers = [
         "Development Status :: 4 - Beta",
