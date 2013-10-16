@@ -66,12 +66,12 @@ __all__ = [
 
 try:
     _ignore_types = (six.string_types, tuple, bytes)
-except:
+except: #pragma: no cover
     _ignore_types = (six.string_types, tuple)
 
 try:
     _string_types = (six.string_types,  bytes)
-except:
+except: #pragma: no cover
     _string_types = (six.string_types)
 
 _primitive_types = (int, float, bool)
@@ -120,13 +120,24 @@ def freeze(data_structure, stringify=False):
     >>> freeze(testdata) == freeze_fast(testdata)
     True
 
-    Hash anything!
+    # Testing if hasattr(data_structure, "__dict__")
 
-    >>> a = freeze(sys, stringify=True)
-    >>> len(a) > 0
+    >>> class A():
+    ...     pass
+    >>> a = A()
+    >>> b = freeze([a, {"other": a}])
+    >>> "<class 'freeze.A'> at " in str(b)
     True
-    >>> hash(a) != None
+
+    >>> a = lambda a: a*a
+    >>> b = freeze([a, {"other": a}])
+    >>> "<class 'function'> at " in str(b)
     True
+
+    # Testing builtings
+
+    >>> freeze([print])
+    ('<built-in function print>',)
     """
 
     identity_set = set()
@@ -147,7 +158,12 @@ def freeze(data_structure, stringify=False):
             if tlen != -1:
                 # Except string and tuples
                 if not isinstance(data_structure, _ignore_types):
-                    return "%s at 0x%d" % (type(data_structure), idd)
+                    # I can't test this on python3. I would need a type that is
+                    # not handled above. Namespaces are the only thing I know
+                    # and python3 doesn't freeze namespaces :(
+                    return "%s at 0x%d" % (
+                        type(data_structure), idd
+                    )  # pragma: no cover
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
@@ -347,6 +363,29 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ... ], stringify=True, assume_key=True)
     >>> a
     ((), 'a', (('a', (3, (('w', ('3', (2, 3, 5), 4)),))),), (5, 4))
+
+    # Testing if hasattr(data_structure, "__dict__")
+
+    >>> class A():
+    ...     pass
+    >>> a = A()
+    >>> b = freeze_stable([a, {"other": a}], stringify=False)
+    >>> "<class 'freeze.A'> at " in str(b)
+    True
+
+    >>> a = lambda a: a*a
+    >>> b = freeze_stable([a, {"other": a}], stringify=False)
+    >>> "<class 'function'> at " in str(b)
+    True
+
+    # Testing builtings
+
+    >>> freeze_stable([print], stringify=False)
+    ('<built-in function print>',)
+
+
+    >>> freeze_stable({"a": "b"}, assume_key=True, stringify=False)
+    (('a', 'b'),)
     """
 
     if not stringify:
@@ -368,7 +407,12 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
             if tlen != -1:
                 # Except string and tuples
                 if not isinstance(data_structure, _ignore_types):
-                    return "%s at 0x%d" % (type(data_structure), idd)
+                    # I can't test this on python3. I would need a type that is
+                    # not handled above. Namespaces are the only thing I know
+                    # and python3 doesn't freeze namespaces :(
+                    return "%s at 0x%d" % (
+                        type(data_structure), idd
+                    )  # pragma: no cover
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
@@ -424,7 +468,15 @@ def stable_hash(data_structure):
     Note: hash(freeze.freeze_fast(x)) is faster than freeze.recursive_hash(x)
     BUT freeze.stable_hash(x) is much faster than hash(freeze.stable_freeze(x)
 
-    :param   data_structure: The structure to hash"""
+    :param   data_structure: The structure to hash
+
+    >>> class A(object):
+    ...     def __init__(self):
+    ...         self.huhu = 53
+    >>> a = A()
+    >>> stable_hash([a, 4]) == stable_hash([4, a])
+    True
+    """
     # Dictize if possible (support objects)
     try:
         data_structure = data_structure.__dict__
@@ -452,7 +504,20 @@ def stable_hash(data_structure):
 def recursive_hash(data_structure):
     """Recursive hash of data-structure and objects. No cycle detection.
 
-    :param   data_structure: The structure to hash"""
+    :param   data_structure: The structure to hash
+
+    The hash is seeded different everytime python is started. So there is no
+    meaningful test yet.
+
+    >>> class A(object):
+    ...     def __init__(self):
+    ...         self.huhu = 53
+    >>> a = A()
+    >>> b = [a, 4]
+    >>> bool(recursive_hash(b))
+    True
+
+    """
     # Dictize if possible (support objects)
     try:
         data_structure = data_structure.__dict__
@@ -549,6 +614,55 @@ def tree_diff(a, b, n=5, deterministic=True):
       (3,
        4))
 
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, 'tree', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> transparent_repr("\\n".join(
+    ...     tree_diff(a, b, deterministic=False).split("\\n")[2:]
+    ... ))
+    @@ -1,12 +1,12 @@
+     ((),
+    - 'a',
+    - (('a',
+    -   (((('tree',
+    + (((((('3',
+            (2,
+             3,
+             5),
+            4),
+           'w'),),
+    -    3)),),
+    +    3),
+    +   'a'),),
+    + 'a',
+      (3,
+       4))
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set(['3', 4, frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> transparent_repr("\\n".join(
+    ...     tree_diff(a, b, deterministic=False).split("\\n")[2:]
+    ... ))
+    <BLANKLINE>
     """
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)
@@ -570,7 +684,58 @@ def tree_diff_assert(a, b, n=5, deterministic=True):
     :param             n: lines of context
     :type              n: int
     :param deterministic: Do not sort the tree
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, 'tree', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> try:
+    ...     tree_diff_assert(a, b, deterministic=False)
+    ... except:
+    ...     "GOT IT"
+    'GOT IT'
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set(['3', 4, frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> tree_diff_assert(a, b, deterministic=False)
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set(['3', 4, frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> try:
+    ...     tree_diff_assert(a, b, deterministic=True)
+    ... except:
+    ...     "GOT IT"
+    'GOT IT'
+
     """
+
     a = freeze(a, stringify=True)
     b = freeze(b, stringify=True)
     if deterministic:
@@ -706,6 +871,77 @@ def frozen_equal_assert(a, b, deterministic=True):
     :param             a: data_structure a
     :param             b: data_structure b
     :param deterministic: use flatten only for creating the diff
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, 'tree', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> try:
+    ...     frozen_equal_assert(a, b, deterministic=False)
+    ... except:
+    ...     "GOT IT"
+    'GOT IT'
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4, 1],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3, 1],
+    ...     {'a': [3, {'w' : set(['3', 4, frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> frozen_equal_assert(a, b, deterministic=False)
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set(['3', 4, frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> try:
+    ...     frozen_equal_assert(a, b, deterministic=True)
+    ... except:
+    ...     "GOT IT"
+    'GOT IT'
+
+    Testing case where flatten doen't find a diff.
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4, 1],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [3, 4, 1],
+    ...     {'a': [3, {'w' : set([4, 3, frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> try:
+    ...     frozen_equal_assert(a, b, deterministic=True)
+    ... except:
+    ...     "GOT IT"
+    'GOT IT'
+
     """
 
     if not deterministic:
@@ -848,11 +1084,11 @@ class TraversalBasedReprCompare(object):
     def __eq__(self, other):
         return self._cmp(other) == 0
 
-    def __cmp__(self, other):
+    def __cmp__(self, other):  # pragma: no cover
         return self._cmp(other)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     import doctest
     result = doctest.testmod()
     sys.exit(result.failed)
