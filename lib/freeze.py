@@ -193,7 +193,12 @@ def freeze(data_structure, stringify=False):
             except:
                 pass
             if tlen != -1:
-                return tuple([freeze_helper(x) for x in data_structure])
+                # Well there are classes out in the wild that answer to len
+                # but have no indexer.
+                try:
+                    return tuple([freeze_helper(x) for x in data_structure])
+                except:  # pragma: no cover
+                    pass
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
         if stringify:
@@ -266,7 +271,14 @@ def freeze_fast(data_structure):
             except:
                 pass
             if tlen != -1:
-                return tuple([freeze_fast_helper(x) for x in data_structure])
+                # Well there are classes out in the wild that answer to len
+                # but have no indexer.
+                try:
+                    return tuple([
+                        freeze_fast_helper(x) for x in data_structure
+                    ])
+                except:  # pragma: no cover
+                    pass
         return data_structure
     return freeze_fast_helper(data_structure)
 
@@ -282,21 +294,26 @@ def _recursive_sort(data_structure, assume_key=False):
         except:
             pass
         if tlen != -1:
-            if assume_key and tlen == 2:
-                return tuple([
-                    _recursive_sort(
-                        x,
-                        assume_key=assume_key
-                    ) for x in data_structure
-                ])
-            else:
-                return tuple(sorted(
-                    [_recursive_sort(
-                        x,
-                        assume_key=assume_key
-                    ) for x in data_structure],
-                    key=TraversalBasedReprCompare,
-                ))
+            # Well there are classes out in the wild that answer to len
+            # but have no indexer.
+            try:
+                if assume_key and tlen == 2:
+                    return tuple([
+                        _recursive_sort(
+                            x,
+                            assume_key=assume_key
+                        ) for x in data_structure
+                    ])
+                else:
+                    return tuple(sorted(
+                        [_recursive_sort(
+                            x,
+                            assume_key=assume_key
+                        ) for x in data_structure],
+                        key=TraversalBasedReprCompare,
+                    ))
+            except:  # pragma: no cover
+                pass
     return data_structure
 
 
@@ -438,15 +455,20 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
             except:
                 pass
             if tlen != -1:
-                if assume_key and tlen == 2:
-                    return tuple([
-                        freeze_stable_helper(x) for x in data_structure
-                    ])
-                else:
-                    return tuple(sorted(
-                        [freeze_stable_helper(x) for x in data_structure],
-                        key=TraversalBasedReprCompare
-                    ))
+                # Well there are classes out in the wild that answer to len
+                # but have no indexer.
+                try:
+                    if assume_key and tlen == 2:
+                        return tuple([
+                            freeze_stable_helper(x) for x in data_structure
+                        ])
+                    else:
+                        return tuple(sorted(
+                            [freeze_stable_helper(x) for x in data_structure],
+                            key=TraversalBasedReprCompare
+                        ))
+                except:  # pragma: no cover
+                    pass
         # To guarantee that the result is hashable we do not return
         # builtin_function_or_method
         if isinstance(data_structure, _builtin_function_or_method_type):
@@ -500,8 +522,13 @@ def stable_hash(data_structure):
         except:
             pass
         if tlen != -1:
-            hashs = sorted([stable_hash(item) for item in data_structure])
-            return hash(tuple(hashs))
+            # Well there are classes out in the wild that answer to len
+            # but have no indexer.
+            try:
+                hashs = sorted([stable_hash(item) for item in data_structure])
+                return hash(tuple(hashs))
+            except:  # pragma: no cover
+                pass
     return hash(data_structure)
 
 
@@ -541,8 +568,13 @@ def recursive_hash(data_structure):
         except:
             pass
         if tlen != -1:
-            hashs = tuple(recursive_hash(item) for item in data_structure)
-            return hash(tuple(hashs))
+            # Well there are classes out in the wild that answer to len
+            # but have no indexer.
+            try:
+                hashs = tuple(recursive_hash(item) for item in data_structure)
+                return hash(tuple(hashs))
+            except:  # pragma: no cover
+                pass
     return hash(data_structure)
 
 
