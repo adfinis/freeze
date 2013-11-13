@@ -85,6 +85,18 @@ _primitive_types = (int, float, bool)
 _builtin_function_or_method_type = type(dict().get)
 
 
+def dictize(data_structure):
+    try:
+        return data_structure.__dict__
+    except:
+        if hasattr(data_structure, "__slots__"):
+            dict_ = {}
+            for x in data_structure.__slots__:
+                dict_[x] = getattr(data_structure, x)
+            return dict_
+        return data_structure
+
+
 # At the moment the freeze variants don't share code. My merged version of
 # freeze was quite slow. Unit I come up with a better solution all freeze
 # variants have to be maintained.
@@ -155,7 +167,10 @@ def freeze(data_structure, stringify=False):
         idd = id(data_structure)
         if idd in identity_set:
             # We do not recurse into dictizable objects
-            if hasattr(data_structure, "__dict__"):
+            if (
+                hasattr(data_structure, "__dict__") or
+                hasattr(data_structure, "__slots__")
+            ):
                 return "%s at 0x%d" % (type(data_structure), idd)
             # We do not recurse into containers
             tlen = -1
@@ -175,10 +190,7 @@ def freeze(data_structure, stringify=False):
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
-        try:
-            data_structure = data_structure.__dict__
-        except:
-            pass
+        data_structure = dictize(data_structure)
         # Itemize if needed
         try:
             data_structure = data_structure.items()
@@ -253,10 +265,7 @@ def freeze_fast(data_structure):
     """
     def freeze_fast_helper(data_structure):
         # Dictize if possible (support objects)
-        try:
-            data_structure = data_structure.__dict__
-        except:
-            pass
+        data_structure = dictize(data_structure)
         # Itemize if needed
         try:
             data_structure = data_structure.items()
@@ -342,6 +351,12 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     :param        stringify: Stringify all non-primitive leaves
     :type         stringify: bool
 
+    >>> class It(object):
+    ...     __slots__ = ['it_slot']
+    ...     def __init__(self):
+    ...         self.it_slot = "huhu"
+    >>> freeze_stable(It())
+    (('huhu', 'it_slot'),)
 
     >>> a = freeze_stable([
     ...     'a',
@@ -417,7 +432,10 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
         idd = id(data_structure)
         if idd in identity_set:
             # We do not recurse into dictizable objects
-            if hasattr(data_structure, "__dict__"):
+            if (
+                hasattr(data_structure, "__dict__") or
+                hasattr(data_structure, "__slots__")
+            ):
                 return "%s at 0x%d" % (type(data_structure), idd)
             # We do not recurse into containers
             tlen = -1
@@ -437,10 +455,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
-        try:
-            data_structure = data_structure.__dict__
-        except:
-            pass
+        data_structure = dictize(data_structure)
         # Itemize if needed
         try:
             data_structure = data_structure.items()
@@ -504,10 +519,7 @@ def stable_hash(data_structure):
     True
     """
     # Dictize if possible (support objects)
-    try:
-        data_structure = data_structure.__dict__
-    except:
-        pass
+    data_structure = dictize(data_structure)
     # Itemize if needed
     try:
         data_structure = data_structure.items()
@@ -550,10 +562,7 @@ def recursive_hash(data_structure):
 
     """
     # Dictize if possible (support objects)
-    try:
-        data_structure = data_structure.__dict__
-    except:
-        pass
+    data_structure = dictize(data_structure)
     # Itemize if needed
     try:
         data_structure = data_structure.items()
@@ -832,7 +841,7 @@ def _flatten_helper(iterable, pathlist, path, parent_index=False):
             index += 1
 
 
-def flatten(data_structure, assume_key=True):
+def flatten(data_structure, assume_key=True, deterministic=False):
     """Converts a data-structure to a flat set of paths.
     It makes it easier to comapre data-structures in unittests.
 
@@ -845,6 +854,7 @@ def flatten(data_structure, assume_key=True):
     :param   assume_key:     Assume that substructures of len() == 2
                              are key-value pairs -> don't sort
     :type    assume_key:     bool
+    :type    deterministic:  do not sort the tree
 
     >>> test_one = [
     ...    'a',
@@ -880,16 +890,26 @@ def flatten(data_structure, assume_key=True):
      '/2/a/3/w/2/4',
      '/3/4']
 
-     >>> len(set(flat_one) - set(flat_two))
-     0
+    >>> len(set(flat_one) - set(flat_two))
+    0
+    >>> vformat(flatten(('a', (1, 2, ('b', (3, 4)))), deterministic=True))
+    ['/a/0/1',
+     '/a/1/2',
+     '/a/b/3/4']
     """
     pathlist = []
-
-    _flatten_helper(freeze_stable(
-        data_structure,
-        assume_key=assume_key,
-        stringify=True
-    ), pathlist, [''])
+    if deterministic:
+        tree = freeze(
+            data_structure,
+            stringify=True
+        )
+    else:
+        tree = freeze_stable(
+            data_structure,
+            assume_key=assume_key,
+            stringify=True
+        )
+    _flatten_helper(tree, pathlist, [''])
     return pathlist
 
 
