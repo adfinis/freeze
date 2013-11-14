@@ -91,6 +91,8 @@ def dictize(data_structure):
 
     :param  data_structure: object to create dict of
     """
+    if isinstance(data_structure, dict):
+        return data_structure
     try:
         return data_structure.__dict__
     except:
@@ -102,20 +104,18 @@ def dictize(data_structure):
         return data_structure
 
 
-def _get_repr_or_type(data_structure, idd):
+def _get_repr_or_type(data_structure):
     """Retuns "good" representation of cycled or empty objects"""
     info = repr(data_structure)
     # A repr longer than 50 is not good :-)
-    if len(info) > 50:
-        return "%s at 0x%d" % (type(data_structure), idd)
-    elif " at 0x" in info:
-        return info
+    if len(info) > 50 or " at 0x" in info:
+        return "<instance of %s>" % type(data_structure)
     else:
-        return "%s at 0x%d" % (info, idd)
+        return info
 
 
 # At the moment the freeze variants don't share code. My merged version of
-# freeze was quite slow. Unit I come up with a better solution all freeze
+# freeze was quite slow. Until I come up with a better solution all freeze
 # variants have to be maintained.
 
 # About try/except. Python encourages duck typing. In fact there are things
@@ -210,7 +210,7 @@ def freeze(data_structure, stringify=False):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return _get_repr_or_type(data_structure, idd)
+                return "cycle: %s" % _get_repr_or_type(data_structure)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -223,7 +223,7 @@ def freeze(data_structure, stringify=False):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't freeze namespaces :(
-                    return _get_repr_or_type(data_structure, idd)
+                    return "cycle: %s" % _get_repr_or_type(data_structure)
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
@@ -243,7 +243,7 @@ def freeze(data_structure, stringify=False):
                 pass
             if tlen == 0:
                 if data_structure is not data_structure_orig:
-                    return _get_repr_or_type(data_structure_orig, idd)
+                    return _get_repr_or_type(data_structure_orig)
             if tlen != -1:
                 # Well there are classes out in the wild that answer to len
                 # but have no indexer.
@@ -322,10 +322,7 @@ def freeze_fast(data_structure):
                 pass
             if tlen == 0:
                 if data_structure is not data_structure_orig:
-                    return _get_repr_or_type(
-                        data_structure_orig,
-                        id(data_structure_orig)
-                    )
+                    return _get_repr_or_type(data_structure_orig)
             if tlen != -1:
                 # Well there are classes out in the wild that answer to len
                 # but have no indexer.
@@ -482,7 +479,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return _get_repr_or_type(data_structure, idd)
+                return "cycle: %s" % _get_repr_or_type(data_structure)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -495,7 +492,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't freeze namespaces :(
-                    return _get_repr_or_type(data_structure, idd)
+                    return "cycle: %s" % _get_repr_or_type(data_structure)
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
@@ -515,7 +512,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 pass
             if tlen == 0:
                 if data_structure is not data_structure_orig:
-                    return _get_repr_or_type(data_structure_orig, idd)
+                    return _get_repr_or_type(data_structure_orig)
             if tlen != -1:
                 # Well there are classes out in the wild that answer to len
                 # but have no indexer.
@@ -583,10 +580,7 @@ def stable_hash(data_structure):
             pass
         if tlen == 0:
             if data_structure is not data_structure_orig:
-                return hash(_get_repr_or_type(
-                    data_structure_orig,
-                    id(data_structure_orig)
-                ))
+                return hash(_get_repr_or_type(data_structure_orig))
         if tlen != -1:
             # Well there are classes out in the wild that answer to len
             # but have no indexer.
@@ -633,10 +627,7 @@ def recursive_hash(data_structure):
             pass
         if tlen == 0:
             if data_structure is not data_structure_orig:
-                return hash(_get_repr_or_type(
-                    data_structure_orig,
-                    id(data_structure_orig)
-                ))
+                return hash(_get_repr_or_type(data_structure_orig))
         if tlen != -1:
             # Well there are classes out in the wild that answer to len
             # but have no indexer.
