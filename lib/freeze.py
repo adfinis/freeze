@@ -64,6 +64,7 @@ __all__ = [
     "flatten",
     "frozen_equal_assert",
     "vformat",
+    "dictize",
     "transparent_repr",
     "traverse_frozen_data",
     "TraversalBasedReprCompare",
@@ -86,6 +87,10 @@ _builtin_function_or_method_type = type(dict().get)
 
 
 def dictize(data_structure):
+    """Create a dict from a object even if it has slots.
+
+    :param  data_structure: object to create dict of
+    """
     try:
         return data_structure.__dict__
     except:
@@ -97,9 +102,32 @@ def dictize(data_structure):
         return data_structure
 
 
+def _get_repr_or_type(data_structure, idd):
+    """Retuns "good" representation of cycled or empty objects"""
+    info = repr(data_structure)
+    # A repr longer than 50 is not good :-)
+    if len(info) > 50:
+        return "%s at 0x%d" % (type(data_structure), idd)
+    elif " at 0x" in info:
+        return info
+    else:
+        return "%s at 0x%d" % (info, idd)
+
+
 # At the moment the freeze variants don't share code. My merged version of
 # freeze was quite slow. Unit I come up with a better solution all freeze
 # variants have to be maintained.
+
+# About try/except. Python encourages duck typing. In fact there are things
+# you can't find out without try/except. Therefore python has a very fast
+# try/except and it is faster than hasattr or isinstance. And in the case of
+# __len__ there are many things in python that have no __len__ but len()
+# works, so it is one of the cases where you have to use try/except. I did a
+# ugly thing though: none of the excepts specify an exception. I don't know
+# how to improve that, it is often very difficult to select a exception,
+# because I don't know ALL of python and people can feed things into freeze I
+# never heard/thought of.
+
 def freeze(data_structure, stringify=False):
     """Freezing a data-structure makes all items tuples and therefore
     all levels are comparable/hashable/sortable. It has cycle detection
@@ -144,15 +172,25 @@ def freeze(data_structure, stringify=False):
     ...     pass
     >>> a = A()
     >>> b = freeze([a, {"other": a}])
-    >>> ("<class 'freeze.A'> at " in str(b) or
-    ... "<type 'instance'> at " in str(b))
+    >>> ("<freeze.A object at " in str(b))
     True
 
     >>> a = lambda a: a*a
     >>> b = freeze([a, {"other": a}])
-    >>> ("<class 'function'> at " in str(b) or
-    ... "<type 'function'> at " in str(b))
+    >>> ("<function <lambda> at "  in str(b))
     True
+
+    >>> class B(object):
+    ...     def __repr__(self):
+    ...         return "huhu"
+    >>> a = B()
+    >>> freeze([a, {"other": a}])
+
+    >>> class C(object):
+    ...     def __repr__(self):
+    ...         return "huhu" * 15
+    >>> a = C()
+    >>> freeze([a, {"other": a}])
 
     # Testing builtings
 
@@ -164,6 +202,7 @@ def freeze(data_structure, stringify=False):
 
     def freeze_helper(data_structure):
         # Cycle detection
+        data_structure_orig = data_structure
         idd = id(data_structure)
         if idd in identity_set:
             # We do not recurse into dictizable objects
@@ -171,7 +210,7 @@ def freeze(data_structure, stringify=False):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return "%s at 0x%d" % (type(data_structure), idd)
+                return _get_repr_or_type(data_structure, idd)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -184,9 +223,7 @@ def freeze(data_structure, stringify=False):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't freeze namespaces :(
-                    return "%s at 0x%d" % (
-                        type(data_structure), idd
-                    )  # pragma: no cover
+                    return _get_repr_or_type(data_structure, idd)
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
@@ -204,6 +241,9 @@ def freeze(data_structure, stringify=False):
                 tlen = len(data_structure)
             except:
                 pass
+            if tlen == 0:
+                if data_structure is not data_structure_orig:
+                    return _get_repr_or_type(data_structure_orig, idd)
             if tlen != -1:
                 # Well there are classes out in the wild that answer to len
                 # but have no indexer.
@@ -264,6 +304,7 @@ def freeze_fast(data_structure):
     True
     """
     def freeze_fast_helper(data_structure):
+        data_structure_orig = data_structure
         # Dictize if possible (support objects)
         data_structure = dictize(data_structure)
         # Itemize if needed
@@ -279,6 +320,12 @@ def freeze_fast(data_structure):
                 tlen = len(data_structure)
             except:
                 pass
+            if tlen == 0:
+                if data_structure is not data_structure_orig:
+                    return _get_repr_or_type(
+                        data_structure_orig,
+                        id(data_structure_orig)
+                    )
             if tlen != -1:
                 # Well there are classes out in the wild that answer to len
                 # but have no indexer.
@@ -404,14 +451,12 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     ...     pass
     >>> a = A()
     >>> b = freeze_stable([a, {"other": a}], stringify=False)
-    >>> ("<class 'freeze.A'> at " in str(b) or
-    ... "<type 'instance'> at " in str(b))
+    >>> ("<freeze.A object at " in str(b))
     True
 
     >>> a = lambda a: a*a
     >>> b = freeze_stable([a, {"other": a}], stringify=False)
-    >>> ("<class 'function'> at " in str(b) or
-    ... "<type 'function'> at " in str(b))
+    >>> ("<function <lambda> at "  in str(b))
     True
 
     # Testing builtings
@@ -429,6 +474,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
 
     def freeze_stable_helper(data_structure):
         # Cycle detection
+        data_structure_orig = data_structure
         idd = id(data_structure)
         if idd in identity_set:
             # We do not recurse into dictizable objects
@@ -436,7 +482,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return "%s at 0x%d" % (type(data_structure), idd)
+                return _get_repr_or_type(data_structure, idd)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -449,9 +495,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't freeze namespaces :(
-                    return "%s at 0x%d" % (
-                        type(data_structure), idd
-                    )  # pragma: no cover
+                    return _get_repr_or_type(data_structure, idd)
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
@@ -469,6 +513,9 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 tlen = len(data_structure)
             except:
                 pass
+            if tlen == 0:
+                if data_structure is not data_structure_orig:
+                    return _get_repr_or_type(data_structure_orig, idd)
             if tlen != -1:
                 # Well there are classes out in the wild that answer to len
                 # but have no indexer.
@@ -518,6 +565,7 @@ def stable_hash(data_structure):
     >>> stable_hash([a, 4]) == stable_hash([4, a])
     True
     """
+    data_structure_orig = data_structure
     # Dictize if possible (support objects)
     data_structure = dictize(data_structure)
     # Itemize if needed
@@ -533,6 +581,12 @@ def stable_hash(data_structure):
             tlen = len(data_structure)
         except:
             pass
+        if tlen == 0:
+            if data_structure is not data_structure_orig:
+                return hash(_get_repr_or_type(
+                    data_structure_orig,
+                    id(data_structure_orig)
+                ))
         if tlen != -1:
             # Well there are classes out in the wild that answer to len
             # but have no indexer.
@@ -561,6 +615,7 @@ def recursive_hash(data_structure):
     True
 
     """
+    data_structure_orig = data_structure
     # Dictize if possible (support objects)
     data_structure = dictize(data_structure)
     # Itemize if needed
@@ -576,6 +631,12 @@ def recursive_hash(data_structure):
             tlen = len(data_structure)
         except:
             pass
+        if tlen == 0:
+            if data_structure is not data_structure_orig:
+                return hash(_get_repr_or_type(
+                    data_structure_orig,
+                    id(data_structure_orig)
+                ))
         if tlen != -1:
             # Well there are classes out in the wild that answer to len
             # but have no indexer.
