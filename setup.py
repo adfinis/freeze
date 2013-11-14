@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "freeze",
-    version = "0.5.0",
+    version = "0.6.0",
     package_dir = {'': 'lib'},
     py_modules=['freeze'],
 
