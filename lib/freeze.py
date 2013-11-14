@@ -171,26 +171,34 @@ def freeze(data_structure, stringify=False):
     >>> class A():
     ...     pass
     >>> a = A()
-    >>> b = freeze([a, {"other": a}])
-    >>> ("<freeze.A object at " in str(b))
-    True
+    >>> vformat(freeze([a, {"other": a}]))
+    ("<instance of <class 'freeze.A'>>",
+     (('other',
+       "cycle: <instance of <class 'freeze.A'>>"),))
 
     >>> a = lambda a: a*a
-    >>> b = freeze([a, {"other": a}])
-    >>> ("<function <lambda> at "  in str(b))
-    True
+    >>> vformat(freeze([a, {"other": a}]))
+    ("<instance of <class 'function'>>",
+     (('other',
+       "cycle: <instance of <class 'function'>>"),))
 
     >>> class B(object):
     ...     def __repr__(self):
     ...         return "huhu"
     >>> a = B()
-    >>> freeze([a, {"other": a}])
+    >>> vformat(freeze([a, {"other": a}]))
+    ('huhu',
+     (('other',
+       'cycle: huhu'),))
 
     >>> class C(object):
     ...     def __repr__(self):
     ...         return "huhu" * 15
     >>> a = C()
-    >>> freeze([a, {"other": a}])
+    >>> vformat(freeze([a, {"other": a}]))
+    ("<instance of <class 'freeze.C'>>",
+     (('other',
+       "cycle: <instance of <class 'freeze.C'>>"),))
 
     # Testing builtings
 
@@ -217,7 +225,7 @@ def freeze(data_structure, stringify=False):
                 tlen = len(data_structure)
             except:
                 pass
-            if tlen != -1:
+            if tlen != -1:  # pragma: no cover
                 # Except string and tuples
                 if not isinstance(data_structure, _ignore_types):
                     # I can't test this on python3. I would need a type that is
@@ -302,6 +310,15 @@ def freeze_fast(data_structure):
 
     >>> b"sdf" == freeze_fast([[3, b"sdf"], [4, 245234534]])[0][1]
     True
+
+    >>> class B(object):
+    ...     def __repr__(self):
+    ...         return "huhu"
+    >>> a = B()
+    >>> vformat(freeze_fast([a, {"other": a}]))
+    ('huhu',
+     (('other',
+       'huhu'),))
     """
     def freeze_fast_helper(data_structure):
         data_structure_orig = data_structure
@@ -447,14 +464,16 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
     >>> class A():
     ...     pass
     >>> a = A()
-    >>> b = freeze_stable([a, {"other": a}], stringify=False)
-    >>> ("<freeze.A object at " in str(b))
-    True
+    >>> vformat(freeze_stable([a, {"other": a}], stringify=False))
+    ("<instance of <class 'freeze.A'>>",
+     (("cycle: <instance of <class 'freeze.A'>>",
+       'other'),))
 
     >>> a = lambda a: a*a
-    >>> b = freeze_stable([a, {"other": a}], stringify=False)
-    >>> ("<function <lambda> at "  in str(b))
-    True
+    >>> vformat(freeze_stable([a, {"other": a}], stringify=False))
+    ("<instance of <class 'function'>>",
+     (("cycle: <instance of <class 'function'>>",
+       'other'),))
 
     # Testing builtings
 
@@ -486,7 +505,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 tlen = len(data_structure)
             except:
                 pass
-            if tlen != -1:
+            if tlen != -1:  # pragma: no cover
                 # Except string and tuples
                 if not isinstance(data_structure, _ignore_types):
                     # I can't test this on python3. I would need a type that is
@@ -561,6 +580,14 @@ def stable_hash(data_structure):
     >>> a = A()
     >>> stable_hash([a, 4]) == stable_hash([4, a])
     True
+
+    >>> class B(object):
+    ...     def __repr__(self):
+    ...         return "huhu"
+    >>> a = B()
+    >>> (stable_hash([a, {"other": a}]) ==
+    ... stable_hash([{"other": a}, a]))
+    True
     """
     data_structure_orig = data_structure
     # Dictize if possible (support objects)
@@ -608,6 +635,19 @@ def recursive_hash(data_structure):
     >>> bool(recursive_hash(b))
     True
 
+    >>> class B(object):
+    ...     def __repr__(self):
+    ...         return "huhu"
+    >>> a = B()
+    >>> bool(recursive_hash([a, {"other": a}]))
+    True
+
+    >>> class A(dict): pass
+    ...
+    >>> a, b = A(), A()
+    >>> a["abc"], b["abc"] = 123, 456
+    >>> recursive_hash(a) != recursive_hash(b)
+    True
     """
     data_structure_orig = data_structure
     # Dictize if possible (support objects)
