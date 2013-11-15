@@ -13,6 +13,15 @@ setup(
     description = "Freeze - hash / sort / compare / diff anything",
     license = "Modified BSD",
     long_description = """
+ATTENTION: I now have enough experience to design clean interface for freeze.
+So if there is no bugfix version, the next version will break things.
+
+* freeze_fast will become freeze (because only cycle free datastructures can
+  truely be frozen
+* freeze becomes dump, freeze_stable becomes dump_stable
+-> Their purpose is unit-testing or dumping for analysis
+-> There will be an option to select unit-test or dump mode
+
 Freeze the state of data-structures and objects for data-analysis or testing
 (diffing data-structures). Frozen data-structures consist of only tuples
 and these are comparable/sortable/hashable. The freeze method can be used
@@ -23,7 +32,7 @@ very fast. freeze_stable and flatten are usable for testing and analysis.""",
     #download_url = "https://github.com/adfinis-sygroup/freeze/archive/freeze-0.1.0.tar.gz",
     #bugtrack_url = "https://github.com/adfinis-sygroup/freeze/issues",
     classifiers = [
-        "Development Status :: 4 - Beta",
+        "Development Status :: 3 - Alpha",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",

@@ -187,7 +187,7 @@ def freeze(data_structure, stringify=False):
     >>> vformat(freeze([a, {"other": a}]))
     ('huhu',
      (('other',
-       'cycle: huhu'),))
+       'seen: huhu'),))
 
     >>> class C(object):
     ...     def __repr__(self):
@@ -215,7 +215,7 @@ def freeze(data_structure, stringify=False):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return "cycle: %s" % _get_repr_or_type(data_structure)
+                return "seen: %s" % _get_repr_or_type(data_structure)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -228,7 +228,7 @@ def freeze(data_structure, stringify=False):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't freeze namespaces :(
-                    return "cycle: %s" % _get_repr_or_type(data_structure)
+                    return "seen: %s" % _get_repr_or_type(data_structure)
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
@@ -313,12 +313,11 @@ def freeze_fast(data_structure):
     ...         return "huhu"
     >>> a = B()
     >>> vformat(freeze_fast([a, {"other": a}]))
-    ('huhu',
+    ((),
      (('other',
-       'huhu'),))
+       ()),))
     """
     def freeze_fast_helper(data_structure):
-        data_structure_orig = data_structure
         # Dictize if possible (support objects)
         data_structure = dictize(data_structure)
         # Itemize if needed
@@ -334,9 +333,6 @@ def freeze_fast(data_structure):
                 tlen = len(data_structure)
             except:
                 pass
-            if tlen == 0:
-                if data_structure is not data_structure_orig:
-                    return _get_repr_or_type(data_structure_orig)
             if tlen != -1:
                 # Well there are classes out in the wild that answer to len
                 # but have no indexer.
@@ -493,7 +489,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return "cycle: %s" % _get_repr_or_type(data_structure)
+                return "seen: %s" % _get_repr_or_type(data_structure)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -506,7 +502,7 @@ def freeze_stable(data_structure, assume_key=False, stringify=True):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't freeze namespaces :(
-                    return "cycle: %s" % _get_repr_or_type(data_structure)
+                    return "seen: %s" % _get_repr_or_type(data_structure)
         else:
             identity_set.add(idd)
         # Dictize if possible (support objects)
