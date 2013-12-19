@@ -97,12 +97,24 @@ class TestClass(object):
             self.sub = TestSlots()
 
 
+def no_null_x(string):
+    lines = string.split("\n")
+    new_lines = []
+    for x in lines:
+        if "at 0x" not in x:
+            new_lines.append(x)
+    return TransparentRepr("\n".join(new_lines))
+
+
 class WasDict(tuple):
     __slots__ = ()
 
 
 class IDD(int):
     __slots__ = ()
+
+    def __repr__(self):
+        return "at 0x%X" % self
 
 
 class Meta(list):
@@ -197,6 +209,20 @@ def dump(data_structure):
             3),
            2,
            3)))]))]
+    >>> a = TestSlots()
+    >>> b = [a, 1, 2, [a, "banane"]]
+    >>> no_null_x(vformat(dump(b)))
+    [["<class 'freeze.TestSlots'>",
+      {'a': 'slot',
+       'b': [1,
+             2,
+             3,
+             (1,
+              2,
+              3)]}],
+     1,
+     2,
+      'banane']]
     """
 
     identity_set = set()
@@ -211,8 +237,11 @@ def dump(data_structure):
         if idd in identity_set:
             dup_set.add(idd)
             # We do not recurse into dictizable objects
-            if hasattr(data_structure, "__dict__"):
-                return "%s at 0x%d" % (type(data_structure), idd)
+            if (
+                hasattr(data_structure, "__dict__") or
+                hasattr(data_structure, "__slots__")
+            ):
+                return "%s at 0x%X" % (type(data_structure), idd)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -225,7 +254,7 @@ def dump(data_structure):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't dump namespaces :(
-                    return "%s at 0x%d" % (
+                    return "%s at 0x%X" % (
                         type(data_structure), idd
                     )  # pragma: no cover
         else:
@@ -444,66 +473,6 @@ def recursive_hash(data_structure):
     return hash(freeze(data_structure))
 
 
-#........................................................
-
-
-
-def tree_diff(a, b, n=5, deterministic=True):
-    """Freeze and stringify any data-structure or object, traverse
-    it depth-first in-order and apply a unified diff.
-
-    Depth-first in-order is just like structure would be printed.
-
-    Annotation:
-
-    "(           x"       Going down to level: x
-    ")           x"       Going one level up from: x
-
-    :param             a: data_structure a
-    :param             b: data_structure b
-    :param             n: lines of context
-    :type              n: int
-
-    We need freeze stable to test this across python versions. It doesn't make
-    too much sense, but at least there are some tests.
-
-    """
-    a = freeze(a, stringify=True)
-    b = freeze(b, stringify=True)
-    if deterministic:
-        a = vformat(a).split("\n")
-        b = vformat(b).split("\n")
-    else:
-        a = vformat(_recursive_sort(a)).split("\n")
-        b = vformat(_recursive_sort(b)).split("\n")
-    return "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
-
-
-def tree_diff_assert(a, b, n=5, deterministic=True):
-    """Assert if a equals b. Freeze and stringify any data-structure or object,
-    traverse it depth-first and apply a unified diff, to display the result.
-
-    :param             a: data_structure a
-    :param             b: data_structure b
-    :param             n: lines of context
-    :type              n: int
-    :param deterministic: Do not sort the tree
-
-    """
-
-    a = freeze(a, stringify=True)
-    b = freeze(b, stringify=True)
-    if deterministic:
-        a = vformat(a).split("\n")
-        b = vformat(b).split("\n")
-    else:
-        a = vformat(_recursive_sort(a)).split("\n")
-        b = vformat(_recursive_sort(b)).split("\n")
-    msg = "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
-    if len(msg) != 0:
-        assert False, "difference: \n%s" % msg
-
-
 class TransparentRepr(str):
     """That doctest calls __repr__ is very annoying, you can't follow PEP8
     on large objects. TransparentRepr makes string represent itself
@@ -615,6 +584,63 @@ class TraversalBasedReprCompare(object):
 
     def __cmp__(self, other):  # pragma: no cover
         return self._cmp(other)
+#........................................................
+
+
+def tree_diff(a, b, n=5, deterministic=True):
+    """Freeze and stringify any data-structure or object, traverse
+    it depth-first in-order and apply a unified diff.
+
+    Depth-first in-order is just like structure would be printed.
+
+    Annotation:
+
+    "(           x"       Going down to level: x
+    ")           x"       Going one level up from: x
+
+    :param             a: data_structure a
+    :param             b: data_structure b
+    :param             n: lines of context
+    :type              n: int
+
+    We need freeze stable to test this across python versions. It doesn't make
+    too much sense, but at least there are some tests.
+
+    """
+    a = freeze(a, stringify=True)
+    b = freeze(b, stringify=True)
+    if deterministic:
+        a = vformat(a).split("\n")
+        b = vformat(b).split("\n")
+    else:
+        a = vformat(_recursive_sort(a)).split("\n")
+        b = vformat(_recursive_sort(b)).split("\n")
+    return "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
+
+
+def tree_diff_assert(a, b, n=5, deterministic=True):
+    """Assert if a equals b. Freeze and stringify any data-structure or object,
+    traverse it depth-first and apply a unified diff, to display the result.
+
+    :param             a: data_structure a
+    :param             b: data_structure b
+    :param             n: lines of context
+    :type              n: int
+    :param deterministic: Do not sort the tree
+
+    """
+
+    a = freeze(a, stringify=True)
+    b = freeze(b, stringify=True)
+    if deterministic:
+        a = vformat(a).split("\n")
+        b = vformat(b).split("\n")
+    else:
+        a = vformat(_recursive_sort(a)).split("\n")
+        b = vformat(_recursive_sort(b)).split("\n")
+    msg = "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
+    if len(msg) != 0:
+        assert False, "difference: \n%s" % msg
 
 
 if __name__ == "__main__":  # pragma: no cover
