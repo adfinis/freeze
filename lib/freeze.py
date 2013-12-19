@@ -77,9 +77,36 @@ try:
 except:  # pragma: no cover
     _string_types = (six.string_types)
 
-_primitive_types = (int, float, bool)
+_primitive_types = (int, float, bool) + _string_types
 
 _builtin_function_or_method_type = type(dict().get)
+
+
+class TestSlots(object):
+    __slots__ = ("a", "b")
+
+    def __init__(self):
+        self.a = "slot"
+        self.b = [1, 2, 3, (1, 2, 3)]
+
+
+class TestClass(object):
+    def __init__(self, sub=False):
+        self.a = "huhu"
+        if sub:
+            self.sub = TestSlots()
+
+
+class WasDict(tuple):
+    __slots__ = ()
+
+
+class IDD(int):
+    __slots__ = ()
+
+
+class Meta(list):
+    __slots__ = ()
 
 
 def freeze(data_structure):
@@ -91,47 +118,57 @@ def freeze(data_structure):
 
     Typical usage for unittesting: # TODO: recsort(freeze(dump(x)))
 
+    >>> recursive_sort(freeze(TestClass(True)))
+    [('a', 'huhu'), ('sub', [('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3))])]
     """
     def freeze_helper(data_structure):
-        # Dictize if possible (support objects)
-        try:
-            data_structure = dict(data_structure)
-        except:
-            pass
-        # Itemize if needed
-        try:
-            data_structure = data_structure.items()
-        except:
-            pass
-        # We don't freeze strings
-        if not isinstance(data_structure, _string_types):
-            tlen = -1
-            # If item has a length we freeze it
+        # We don't freeze primitive types
+        if isinstance(data_structure, _primitive_types):
+            return data_structure
+        was_dict = False
+        if (
+            hasattr(data_structure, "__slots__") and
+            not isinstance(data_structure, (Meta, IDD, WasDict))
+        ):
+            list_ = []
+            for x in data_structure.__slots__:
+                list_.append((x, getattr(data_structure, x)))
+            data_structure = tuple(list_)
+            was_dict = True
+        else:
+            # Dictize if possible (support objects)
             try:
-                tlen = len(data_structure)
+                data_structure = data_structure.__dict__
+                was_dict = True
             except:
                 pass
-            if tlen != -1:
-                # Well there are classes out in the wild that answer to len
-                # but have no indexer.
-                try:
+            # Itemize if needed
+            try:
+                data_structure = data_structure.items()
+            except:
+                pass
+        tlen = -1
+        # If item has a length we freeze it
+        try:
+            tlen = len(data_structure)
+        except:
+            pass
+        if tlen != -1:
+            # Well there are classes out in the wild that answer to len
+            # but have no indexer.
+            try:
+                if was_dict:
+                    return WasDict([
+                        freeze_helper(x) for x in data_structure
+                    ])
+                else:
                     return tuple([
                         freeze_helper(x) for x in data_structure
                     ])
-                except:  # pragma: no cover
-                    pass
+            except:  # pragma: no cover
+                pass
         return data_structure
     return freeze_helper(data_structure)
-
-
-class IDD(int):
-    __slots__ = ()
-    pass
-
-
-class Meta(list):
-    __slots__ = ()
-    pass
 
 
 def dump(data_structure):
@@ -144,15 +181,31 @@ def dump(data_structure):
     Typical usage for unittesting: # TODO: recsort(freeze(dump(x)))
 
     >>> dump([1, {'a' : 'b'}])
-    [<class 'list'>, ('1', [<class 'dict'>, {'a': 'b'}])]
+    [1, ["<class 'dict'>", {'a': 'b'}]]
+    >>> vformat(recursive_sort(dump(TestClass(True))))
+    ["<class 'freeze.TestClass'>",
+     [('a',
+       'huhu'),
+      ('sub',
+       ["<class 'freeze.TestSlots'>",
+        [('a',
+          'slot'),
+         ('b',
+          (1,
+           (1,
+            2,
+            3),
+           2,
+           3))]])]]
     """
 
     identity_set = set()
     dup_set      = set()
 
     def dump_helper(data_structure):
+        # Primitive types don't need processing
         if isinstance(data_structure, _primitive_types):
-            return str(data_structure)
+            return data_structure
         # Cycle detection
         idd = id(data_structure)
         if idd in identity_set:
@@ -171,20 +224,32 @@ def dump(data_structure):
                 if not isinstance(data_structure, _ignore_types):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
-                    # and python3 doesn't freeze namespaces :(
+                    # and python3 doesn't dump namespaces :(
                     return "%s at 0x%d" % (
                         type(data_structure), idd
                     )  # pragma: no cover
         else:
             identity_set.add(idd)
         ret = Meta()
-        ret.append(type(data_structure))
+        if not isinstance(data_structure, (tuple, list)):
+            ret.append(str(type(data_structure)))
         ret.append(IDD(idd))
-        # Dictize if possible (support objects)
-        try:
-            data_structure = dict(data_structure)
-        except:
-            pass
+        was_dict = isinstance(data_structure, WasDict)
+        was_tuple = isinstance(data_structure, tuple)
+        if not was_dict:
+            if hasattr(data_structure, "__slots__"):
+                list_ = []
+                for x in data_structure.__slots__:
+                    list_.append((x, getattr(data_structure, x)))
+                data_structure = dict(list_)
+                was_dict = True
+            else:
+                # Dictize if possible (support objects)
+                try:
+                    data_structure = data_structure.__dict__
+                    was_dict = True
+                except:
+                    pass
         # Itemize if possible
         try:
             data_structure = data_structure.items()
@@ -195,30 +260,44 @@ def dump(data_structure):
             return ret
         except:
             pass
-        # We don't freeze strings
-        if not isinstance(data_structure, _string_types):
-            tlen = -1
-            # If item has a length we freeze it
+        tlen = -1
+        # If item has a length we dump it
+        try:
+            tlen = len(data_structure)
+        except:
+            pass
+        if tlen != -1:
+            # Well there are classes out in the wild that answer to len
+            # but have no indexer.
             try:
-                tlen = len(data_structure)
-            except:
+                if was_dict:
+                    ret.append(WasDict([
+                        (dump_helper(x[0]), dump_helper(x[1]))
+                        for x in data_structure
+                    ]))
+                elif was_tuple:
+                    ret.append(tuple([
+                        dump_helper(x) for x in data_structure
+                    ]))
+                else:
+                    ret.append([
+                        dump_helper(x) for x in data_structure
+                    ])
+                return ret
+            except:  # pragma: no cover
                 pass
-            if tlen != -1:
-                # Well there are classes out in the wild that answer to len
-                # but have no indexer.
-                try:
-                    ret.append(tuple([dump_helper(x) for x in data_structure]))
-                    return ret
-                except:  # pragma: no cover
-                    pass
-        return data_structure
+        ret.append(data_structure)
+        return ret
 
     def clean_up(data_structure):
         if isinstance(data_structure, Meta):
-            idd_temp = data_structure[1]
-            if isinstance(idd_temp, IDD):
-                if idd_temp not in dup_set:
-                    del data_structure[1]
+            for x in (1, 0):
+                idd_temp = data_structure[x]
+                if isinstance(idd_temp, IDD):
+                    if idd_temp not in dup_set:
+                        del data_structure[x]
+            if len(data_structure) == 1:
+                data_structure = data_structure[0]
         # We don't clean strings
         if not isinstance(data_structure, _string_types):
             tlen = -1
@@ -228,10 +307,24 @@ def dump(data_structure):
             except:
                 pass
             if tlen != -1:
-                for x in data_structure:
-                    clean_up(x)
+                if isinstance(data_structure, dict):
+                    for k in data_structure.keys():
+                        data_structure[k] = clean_up(data_structure[k])
+                elif isinstance(data_structure, Meta):
+                    data_structure = Meta([
+                        clean_up(x) for x in data_structure
+                    ])
+                elif isinstance(data_structure, tuple):
+                    data_structure = tuple([
+                        clean_up(x) for x in data_structure
+                    ])
+                else:
+                    data_structure = [
+                        clean_up(x) for x in data_structure
+                    ]
         return data_structure
-    return clean_up(dump_helper(data_structure))
+    data = clean_up(dump_helper(data_structure))
+    return data
 
 
 def recursive_sort(data_structure):
@@ -240,26 +333,52 @@ def recursive_sort(data_structure):
     :param   data_structure: The structure to convert.
 
     data_structure must be already sortable or you must use freeze() or dump().
-    The function will work is many kinds of input.
+    The function will work with many kinds of input. Dicts will be converted to
+    lists of tuples.
 
-    >>> recursive_sort(dump([3, 1, {'c' : 'c', 'a' : 'b'}]))
-    [<class 'list'>, ('1', '3', [<class 'dict'>, [['a', 'b'], ['c', 'c']]])]
+    >>> vformat(recursive_sort(dump(
+    ...     [3, 1, {'c' : 'c', 'a' : 'b', 'b' : 'a'}]
+    ... )))
+    (["<class 'dict'>",
+      [('a',
+        'b'),
+       ('b',
+        'a'),
+       ('c',
+        'c')]],
+     1,
+     3)
+    >>> recursive_sort([3, 1, {'c' : 'c', 'a' : 'b', 'b' : 'a'}])
+    ([('a', 'b'), ('b', 'a'), ('c', 'c')], 1, 3)
+    >>> recursive_sort(TestClass())
+    [('a', 'huhu')]
+    >>> a = hash(freeze(dump(TestClass(True))))
+    >>> b = hash(freeze(dump(TestClass(True))))
+    >>> b == a
+    True
+    >>> a = freeze(dump(TestClass(True)))
+    >>> b = freeze(dump(TestClass(True)))
+    >>> b == a
+    True
     """
-    # We don't sort strings
-    if not isinstance(data_structure, _string_types):
+    # We don't sory primitve types
+    if not isinstance(data_structure, _primitive_types):
         is_meta = isinstance(data_structure, Meta)
-        was_dict = False
-        # Dictize if possible (support objects)
-        try:
-            data_structure = dict(data_structure)
-            was_dict = True
-        except:
-            pass
-        # Itemize if possible
-        try:
-            data_structure = data_structure.items()
-        except:
-            pass
+        was_dict = isinstance(data_structure, WasDict)
+        if not (is_meta or was_dict):
+            was_dict = isinstance(data_structure, dict)
+            if not was_dict:
+                # Dictize if possible (support objects)
+                try:
+                    data_structure = data_structure.__dict__
+                    was_dict = True
+                except:
+                    pass
+            # Itemize if possible
+            try:
+                data_structure = data_structure.items()
+            except:
+                pass
         tlen = -1
         # If item has a length we sort it
         try:
@@ -282,10 +401,10 @@ def recursive_sort(data_structure):
                         key=TraversalBasedReprCompare
                     )
                 elif is_meta:
-                    return [
+                    return data_structure[0:-1] + [
                         recursive_sort(
-                            x,
-                        ) for x in data_structure
+                            data_structure[-1]
+                        )
                     ]
                 else:
                     return tuple(sorted(
@@ -320,7 +439,7 @@ def stable_hash(data_structure):
     """
     # Dictize if possible (support objects)
     try:
-        data_structure = dict(data_structure)
+        data_structure = data_structure.__dict__
     except:
         pass
     # Itemize if needed
@@ -366,7 +485,7 @@ def recursive_hash(data_structure):
     """
     # Dictize if possible (support objects)
     try:
-        data_structure = dict(data_structure)
+        data_structure = data_structure.__dict__
     except:
         pass
     # Itemize if needed
@@ -454,6 +573,7 @@ class TransparentRepr(str):
     on large objects. TransparentRepr makes string represent itself
     including all non-printable characters."""
 
+    # TODO: slots?
     def __repr__(self):
         return self
 
