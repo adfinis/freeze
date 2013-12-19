@@ -119,7 +119,7 @@ def freeze(data_structure):
     Typical usage for unittesting: # TODO: recsort(freeze(dump(x)))
 
     >>> recursive_sort(freeze(TestClass(True)))
-    [('a', 'huhu'), ('sub', [('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3))])]
+    (('a', 'huhu'), ('sub', (('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3)))))
     """
     def freeze_helper(data_structure):
         # We don't freeze primitive types
@@ -184,11 +184,11 @@ def dump(data_structure):
     [1, ["<class 'dict'>", {'a': 'b'}]]
     >>> vformat(recursive_sort(dump(TestClass(True))))
     ["<class 'freeze.TestClass'>",
-     [('a',
+     (('a',
        'huhu'),
       ('sub',
        ["<class 'freeze.TestSlots'>",
-        [('a',
+        (('a',
           'slot'),
          ('b',
           (1,
@@ -196,7 +196,7 @@ def dump(data_structure):
             2,
             3),
            2,
-           3))]])]]
+           3)))]))]
     """
 
     identity_set = set()
@@ -291,13 +291,17 @@ def dump(data_structure):
 
     def clean_up(data_structure):
         if isinstance(data_structure, Meta):
+            pre_len = len(data_structure)
             for x in (1, 0):
                 idd_temp = data_structure[x]
                 if isinstance(idd_temp, IDD):
                     if idd_temp not in dup_set:
                         del data_structure[x]
+            post_len = len(data_structure)
             if len(data_structure) == 1:
                 data_structure = data_structure[0]
+            elif pre_len == 2 and post_len == 2:
+                data_structure.insert(0, "<id>")
         # We don't clean strings
         if not isinstance(data_structure, _string_types):
             tlen = -1
@@ -340,18 +344,18 @@ def recursive_sort(data_structure):
     ...     [3, 1, {'c' : 'c', 'a' : 'b', 'b' : 'a'}]
     ... )))
     (["<class 'dict'>",
-      [('a',
+      (('a',
         'b'),
        ('b',
         'a'),
        ('c',
-        'c')]],
+        'c'))],
      1,
      3)
     >>> recursive_sort([3, 1, {'c' : 'c', 'a' : 'b', 'b' : 'a'}])
-    ([('a', 'b'), ('b', 'a'), ('c', 'c')], 1, 3)
+    ((('a', 'b'), ('b', 'a'), ('c', 'c')), 1, 3)
     >>> recursive_sort(TestClass())
-    [('a', 'huhu')]
+    (('a', 'huhu'),)
     >>> a = hash(freeze(dump(TestClass(True))))
     >>> b = hash(freeze(dump(TestClass(True))))
     >>> b == a
@@ -390,7 +394,7 @@ def recursive_sort(data_structure):
             # but have no indexer.
             try:
                 if was_dict:
-                    return sorted(
+                    return tuple(sorted(
                         [
                             (
                                 recursive_sort(x[0]),
@@ -399,7 +403,7 @@ def recursive_sort(data_structure):
                             for x in data_structure
                         ],
                         key=TraversalBasedReprCompare
-                    )
+                    ))
                 elif is_meta:
                     return data_structure[0:-1] + [
                         recursive_sort(
@@ -417,99 +421,31 @@ def recursive_sort(data_structure):
                 pass
     return data_structure
 
-#........................................................
-
 
 def stable_hash(data_structure):
-    """Recursive hash of data-structure and objects. No cycle detection.
-    Creates always the same hash independant of the order inside
-    iterable parts of the data-structure.
+    """Stable hash does: hash(recursive_sort(freeze(data_structure)))
 
-    Note: hash(freeze.freeze_fast(x)) is faster than freeze.recursive_hash(x)
-    BUT freeze.stable_hash(x) is much faster than hash(freeze.stable_freeze(x)
-
-    :param   data_structure: The structure to hash
-
-    >>> class A(object):
-    ...     def __init__(self):
-    ...         self.huhu = 53
-    >>> a = A()
-    >>> stable_hash([a, 4]) == stable_hash([4, a])
+    >>> a = stable_hash(TestClass(True))
+    >>> b = stable_hash(TestClass(True))
+    >>> a == b
     True
     """
-    # Dictize if possible (support objects)
-    try:
-        data_structure = data_structure.__dict__
-    except:
-        pass
-    # Itemize if needed
-    try:
-        data_structure = data_structure.items()
-    except:
-        pass
-    # We don't iterate strings
-    if not isinstance(data_structure, _string_types):
-        tlen = -1
-        # If item has a length we freeze it
-        try:
-            tlen = len(data_structure)
-        except:
-            pass
-        if tlen != -1:
-            # Well there are classes out in the wild that answer to len
-            # but have no indexer.
-            try:
-                hashs = sorted([stable_hash(item) for item in data_structure])
-                return hash(tuple(hashs))
-            except:  # pragma: no cover
-                pass
-    return hash(data_structure)
+    return hash(recursive_sort(freeze(data_structure)))
 
 
 def recursive_hash(data_structure):
-    """Recursive hash of data-structure and objects. No cycle detection.
+    """Recursive hash does: hash(freeze(data_structure))
 
-    :param   data_structure: The structure to hash
-
-    The hash is seeded different everytime python is started. So there is no
-    meaningful test yet.
-
-    >>> class A(object):
-    ...     def __init__(self):
-    ...         self.huhu = 53
-    >>> a = A()
-    >>> b = [a, 4]
-    >>> bool(recursive_hash(b))
+    >>> a = recursive_hash(TestClass(True))
+    >>> b = recursive_hash(TestClass(True))
+    >>> a == b
     True
-
     """
-    # Dictize if possible (support objects)
-    try:
-        data_structure = data_structure.__dict__
-    except:
-        pass
-    # Itemize if needed
-    try:
-        data_structure = data_structure.items()
-    except:
-        pass
-    # We don't iterate strings
-    if not isinstance(data_structure, _string_types):
-        tlen = -1
-        # If item has a length we freeze it
-        try:
-            tlen = len(data_structure)
-        except:
-            pass
-        if tlen != -1:
-            # Well there are classes out in the wild that answer to len
-            # but have no indexer.
-            try:
-                hashs = tuple(recursive_hash(item) for item in data_structure)
-                return hash(tuple(hashs))
-            except:  # pragma: no cover
-                pass
-    return hash(data_structure)
+    return hash(freeze(data_structure))
+
+
+#........................................................
+
 
 
 def tree_diff(a, b, n=5, deterministic=True):
