@@ -1,5 +1,5 @@
 six
 pylama
 coverage
-jedi
 pympler
+-e git+git@github.com:davidhalter/jedi.git
