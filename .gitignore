@@ -32,3 +32,5 @@ nosetests.xml
 .project
 .pydevproject
 optimize.ipynb
+
+lib/freeze.c
