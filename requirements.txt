@@ -2,4 +2,4 @@ six
 pylama
 coverage
 pympler
--e git+git@github.com:davidhalter/jedi.git
+git+git@github.com:davidhalter/jedi.git
