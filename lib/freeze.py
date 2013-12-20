@@ -118,11 +118,43 @@ class WasDict(tuple):
     __slots__ = ()
 
 
-class IDD(int):
-    __slots__ = ()
+class IDD(object):
+    """Helper for recursive references.
+
+    >>> a = IDD("a", 1)
+    >>> b = IDD("b", 2)
+    >>> a < b
+    True
+    >>> b = IDD("x", 1)
+    >>> a == b
+    True
+    """
+    __slots__ = ('idd', 'type_', 'is_visible', 'is_target')
+
+    def __init__(self, data_structure, idd):
+        self.type_ = str(type(data_structure))
+        self.is_visible = not isinstance(
+            data_structure, (tuple, list)
+        )
+        self.idd     = idd
+        self.is_target = False
 
     def __repr__(self):
-        return "at 0x%X" % self
+        if self.is_target:
+            return '"T: %s at 0x%X"' % (
+                self.type_, self.idd
+            )
+        else:
+            return '"%s"' % self.type_
+
+    def __hash__(self):
+        return self.idd
+
+    def __eq__(self, other):
+        return self.idd == other.idd
+
+    def __lt__(self, other):
+        return self.idd < other.idd
 
 
 class Meta(list):
@@ -138,12 +170,6 @@ def freeze(data_structure):
 
     >>> recursive_sort(freeze(TestClass(True)))
     (('a', 'huhu'), ('sub', (('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3)))))
-
-    >>> testdata = json.loads(
-    ...     gzip.open("testdata.json.gz", "r").read().decode()
-    ... )
-
-    >>> a = freeze(testdata)
     """
     def freeze_helper(data_structure):
         # We don't freeze primitive types
@@ -213,9 +239,9 @@ def object_to_items(data_structure):
         for b in hierarchy:
             try:
                 slots += b.__slots__
-            except:
+            except:  # pragma: no cover
                 pass
-    except:
+    except:  # pragma: no cover
         pass
     # Get attrs from slots
     for x in slots:
@@ -254,7 +280,6 @@ def dump(data_structure):
     >>> a = TestSlots()
     >>> b = [a, 1, 2, [a, "banane"]]
     >>> _no_null_x(vformat(dump(b)))
-    [["<class 'freeze.TestSlots'>",
       {'a': 'slot',
        'b': [1,
              2,
@@ -268,7 +293,6 @@ def dump(data_structure):
 
     >>> a = [1, 2]
     >>> _no_null_x(vformat(dump((a, (a, a)))))
-    (['<id>',
       [1,
        2]],
 
@@ -282,14 +306,14 @@ def dump(data_structure):
 
     >>> a = freeze(dump(TestClass(True)))
     >>> b = freeze(dump(TestClass(True)))
-    >>> b == a
+    >>> b != a
     True
 
-    >>> testdata = json.loads(
-    ...     gzip.open("testdata.json.gz", "r").read().decode()
-    ... )
-
-    >>> a = dump(testdata)
+    >>> x = TestClass(True)
+    >>> a = freeze(dump(x))
+    >>> b = freeze(dump(x))
+    >>> b == a
+    True
     """
 
     identity_set = set()
@@ -308,7 +332,7 @@ def dump(data_structure):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return "R:%s at 0x%X" % (type(data_structure), idd)
+                return "R: %s at 0x%X" % (type(data_structure), idd)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -321,15 +345,13 @@ def dump(data_structure):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't dump namespaces :(
-                    return "R:%s at 0x%X" % (
+                    return "R: %s at 0x%X" % (
                         type(data_structure), idd
                     )  # pragma: no cover
         else:
             identity_set.add(idd)
         ret = Meta()
-        if not isinstance(data_structure, (tuple, list)):
-            ret.append(str(type(data_structure)))
-        ret.append(IDD(idd))
+        ret.append(IDD(data_structure, idd))
         was_dict = isinstance(data_structure, WasDict)
         was_tuple = isinstance(data_structure, tuple)
         if not was_dict:
@@ -384,17 +406,15 @@ def dump(data_structure):
 
     def clean_up(data_structure):
         if isinstance(data_structure, Meta):
-            pre_len = len(data_structure)
-            for x in (1, 0):
-                idd_temp = data_structure[x]
-                if isinstance(idd_temp, IDD):
-                    if idd_temp not in dup_set:
-                        del data_structure[x]
-            post_len = len(data_structure)
+            idd_temp = data_structure[0]
+            idd_temp.is_target = idd_temp.idd in dup_set
+            if not (
+                idd_temp.is_target or
+                idd_temp.is_visible
+            ):
+                del data_structure[0]
             if len(data_structure) == 1:
                 data_structure = data_structure[0]
-            elif pre_len == 2 and post_len == 2:
-                data_structure.insert(0, "<id>")
         # We don't clean strings
         if not isinstance(data_structure, _string_types):
             tlen = -1
