@@ -7,7 +7,6 @@
 Freeze - hash / sort / compare / diff anything
 ==============================================
 
-
 .. toctree::
    :maxdepth: 2
 
@@ -15,6 +14,8 @@ Freeze - hash / sort / compare / diff anything
 
    
    freeze.freeze
+   freeze.object_to_items
+   freeze.dump
    freeze.tree_diff_assert
    freeze.stable_hash
    freeze.recursive_hash

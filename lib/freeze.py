@@ -47,6 +47,7 @@ import sys
 import json
 import gzip
 import difflib
+import inspect
 
 # These imports are need for doc tests.
 nothing = json.__file__
@@ -55,6 +56,7 @@ del nothing
 
 __all__ = [
     "freeze",
+    "object_to_items",
     "dump",
     "tree_diff_assert",
     "stable_hash",
@@ -136,6 +138,12 @@ def freeze(data_structure):
 
     >>> recursive_sort(freeze(TestClass(True)))
     (('a', 'huhu'), ('sub', (('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3)))))
+
+    >>> testdata = json.loads(
+    ...     gzip.open("testdata.json.gz", "r").read().decode()
+    ... )
+
+    >>> a = freeze(testdata)
     """
     def freeze_helper(data_structure):
         # We don't freeze primitive types
@@ -146,10 +154,7 @@ def freeze(data_structure):
             hasattr(data_structure, "__slots__") and
             not isinstance(data_structure, (Meta, IDD, WasDict))
         ):
-            list_ = []
-            for x in data_structure.__slots__:
-                list_.append((x, getattr(data_structure, x)))
-            data_structure = tuple(list_)
+            data_structure = tuple(object_to_items(data_structure))
             was_dict = True
         else:
             # Dictize if possible (support objects)
@@ -185,6 +190,37 @@ def freeze(data_structure):
                 pass
         return data_structure  # pragma: no cover
     return freeze_helper(data_structure)
+
+
+def object_to_items(data_structure):
+    """Converts a object to a items list respecting also slots.
+
+    Use dict(object_to_items(obj)) to get a dictionary."""
+    items = []
+    # Get all items from dict
+    try:
+        items = list(data_structure.__dict__.items())
+    except:
+        pass
+    # Get all slots
+    hierarchy = [data_structure]
+    try:
+        hierarchy += inspect.getmro(data_structure)
+    except:
+        pass
+    slots = []
+    try:
+        for b in hierarchy:
+            try:
+                slots += b.__slots__
+            except:
+                pass
+    except:
+        pass
+    # Get attrs from slots
+    for x in slots:
+        items.append((x, getattr(data_structure, x)))
+    return items
 
 
 def dump(data_structure):
@@ -249,6 +285,11 @@ def dump(data_structure):
     >>> b == a
     True
 
+    >>> testdata = json.loads(
+    ...     gzip.open("testdata.json.gz", "r").read().decode()
+    ... )
+
+    >>> a = dump(testdata)
     """
 
     identity_set = set()
@@ -267,7 +308,7 @@ def dump(data_structure):
                 hasattr(data_structure, "__dict__") or
                 hasattr(data_structure, "__slots__")
             ):
-                return "%s at 0x%X" % (type(data_structure), idd)
+                return "R:%s at 0x%X" % (type(data_structure), idd)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -280,7 +321,7 @@ def dump(data_structure):
                     # I can't test this on python3. I would need a type that is
                     # not handled above. Namespaces are the only thing I know
                     # and python3 doesn't dump namespaces :(
-                    return "%s at 0x%X" % (
+                    return "R:%s at 0x%X" % (
                         type(data_structure), idd
                     )  # pragma: no cover
         else:
@@ -293,10 +334,7 @@ def dump(data_structure):
         was_tuple = isinstance(data_structure, tuple)
         if not was_dict:
             if hasattr(data_structure, "__slots__"):
-                list_ = []
-                for x in data_structure.__slots__:
-                    list_.append((x, getattr(data_structure, x)))
-                data_structure = dict(list_)
+                data_structure = dict(object_to_items(data_structure))
                 was_dict = True
             else:
                 # Dictize if possible (support objects)
