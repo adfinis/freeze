@@ -1,3 +1,4 @@
 six
 pylama
 coverage
+jedi

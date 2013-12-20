@@ -6,7 +6,7 @@
 Freeze the state of data-structures and objects for data-analysis or testing
 (diffing data-structures). Frozen data-structures consist of only tuples
 and these are comparable/sortable/hashable. The freeze() function can be used
-for many purposes for example implement __hash__ for your complex object
+for many purposes for example implement __hash__() for your complex object
 very fast. dump() is intended for testing and analysis.
 
 Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
@@ -287,8 +287,10 @@ def dump(data_structure):
     True
 
     When you dump-freeze only content/type counts, same content/type same hash
-    * Two object of the same type with same content will be equal
-    * Two object of the different type with same content will be different
+
+    - Two object of the same type with same content will be equal
+
+    - Two object of the different type with same content will be different
 
     >>> a = hash(freeze(dump(_TestClass(True))))
     >>> b = hash(freeze(dump(_TestClass(True))))
@@ -494,8 +496,8 @@ def recursive_sort(data_structure):
     :param   data_structure: The structure to convert.
 
     data_structure must be already sortable or you must use freeze() or dump().
-    The function will work with many kinds of input. Dicts will be converted to
-    lists of tuples.
+    The function will work with many kinds of input. Dictionaries will be
+    converted to lists of tuples.
 
     >>> _py2_to_py3(vformat(recursive_sort(dump(
     ...     [3, 1, {'c' : 'c', 'a' : 'b', 'b' : 'a'}]
@@ -708,7 +710,6 @@ class TraversalBasedReprCompare(object):
 
     def __cmp__(self, other):  # pragma: no cover
         return self._cmp(other)
-#........................................................
 
 
 def tree_diff(a, b, n=5, sort=False):
@@ -724,7 +725,8 @@ def tree_diff(a, b, n=5, sort=False):
     :param          sort: sort the data-structure
 
     ATTENTION: Sorting means changing the data-structure. The test-result may
-    differ.
+    differ. But in case of dictionaries the results become comparable because
+    the sorting negates the hash-algorithms "de-sorting".
 
     >>> a = recursive_sort(freeze([
     ...     'a',
@@ -785,8 +787,9 @@ def tree_diff(a, b, n=5, sort=False):
 
 
 def tree_diff_assert(a, b, n=5, sort=False):
-    """Assert if a equals b. Dump any data-structure or object,
-    traverse it depth-first and apply a unified diff, to display the result.
+    """User tree_diff() to assert a equals b. Dump any data-structure or
+    object, traverse it depth-first and apply a unified diff, to display
+    the result.
 
     :param             a: data_structure a
     :param             b: data_structure b
@@ -795,7 +798,8 @@ def tree_diff_assert(a, b, n=5, sort=False):
     :param          sort: sort the data-structure
 
     ATTENTION: Sorting means changing the data-structure. The test-result may
-    differ.
+    differ. But in case of dictionaries the results become comparable because
+    the sorting negates the hash-algorithms "de-sorting".
 
     >>> a = [
     ...     'a',
