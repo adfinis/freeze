@@ -380,7 +380,8 @@ def dump(data_structure):
                 if (
                     hasattr(data_structure, "__dict__") or
                     hasattr(data_structure, "__slots__")
-                ):
+                ):  # pragma: no cover
+                    # Special case where __len__ is implemented
                     dup_set.add(idd)
                     return "R: %s at 0x%X" % (type(data_structure), idd)
                 # Except string and tuples
