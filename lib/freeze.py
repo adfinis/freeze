@@ -5,13 +5,13 @@
 """
 Freeze the state of data-structures and objects for data-analysis or testing
 (diffing data-structures). Frozen data-structures consist of only tuples
-and these are comparable/sortable/hashable. The freeze method can be used
+and these are comparable/sortable/hashable. The freeze() function can be used
 for many purposes for example implement __hash__ for your complex object
-very fast. freeze_stable and flatten are usable for testing and analysis.
+very fast. dump() is intended for testing and analysis.
 
 Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
 
-Run doctests by with "python lib/freeze.py"
+Run doctests with "python -m freeze"
 
 """
 
@@ -763,6 +763,7 @@ def tree_diff_assert(a, b, n=5, sort=False):
 
 if __name__ == "__main__":  # pragma: no cover
     import doctest
-    result = doctest.testmod()
+    import freeze
+    result = doctest.testmod(freeze)
     sys.exit(result.failed)
-# lint_ignore=W0702,R0912,R0911
+# lint_ignore=W0702,R0912,R0911,W0404
