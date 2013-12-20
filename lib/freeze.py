@@ -97,13 +97,19 @@ class TestClass(object):
             self.sub = TestSlots()
 
 
-def no_null_x(string):
+def _no_null_x(string):
     lines = string.split("\n")
     new_lines = []
     for x in lines:
         if "at 0x" not in x:
             new_lines.append(x)
     return TransparentRepr("\n".join(new_lines))
+
+
+def _py2_to_py3(string):
+    parts = string.split("type")
+    string = "class".join(parts)
+    return TransparentRepr(string)
 
 
 class WasDict(tuple):
@@ -122,7 +128,7 @@ class Meta(list):
 
 
 def freeze(data_structure):
-    """Freeze tries to convert any datastructure in a hierarchy of tuples.
+    """Freeze tries to convert any data-structure in a hierarchy of tuples.
     Tuples are comparable/sortable/hashable, you can use this with
     with recursive sort and or dump. freeze has no recursion detection.
 
@@ -163,7 +169,7 @@ def freeze(data_structure):
         # If item has a length we freeze it
         try:
             tlen = len(data_structure)
-        except:
+        except:  # pragma: no cover
             pass
         if tlen != -1:
             # Well there are classes out in the wild that answer to len
@@ -179,12 +185,12 @@ def freeze(data_structure):
                     ])
             except:  # pragma: no cover
                 pass
-        return data_structure
+        return data_structure  # pragma: no cover
     return freeze_helper(data_structure)
 
 
 def dump(data_structure):
-    """Dump will create a human readable version of your datastructure.
+    """Dump will create a human readable version of your data-structure.
     It will try to dump almost anything, it has recursion detection and
     will try to display the recursion in a meaningful way.
 
@@ -192,8 +198,10 @@ def dump(data_structure):
 
     Typical usage for unittesting: # TODO: recsort(freeze(dump(x)))
 
-    >>> dump([1, {'a' : 'b'}])
-    [1, ["<class 'dict'>", {'a': 'b'}]]
+    >>> _py2_to_py3(vformat(dump([1, {'a' : 'b'}])))
+    [1,
+     ["<class 'dict'>",
+      {'a': 'b'}]]
     >>> vformat(recursive_sort(dump(TestClass(True))))
     ["<class 'freeze.TestClass'>",
      (('a',
@@ -211,7 +219,7 @@ def dump(data_structure):
            3)))]))]
     >>> a = TestSlots()
     >>> b = [a, 1, 2, [a, "banane"]]
-    >>> no_null_x(vformat(dump(b)))
+    >>> _no_null_x(vformat(dump(b)))
     [["<class 'freeze.TestSlots'>",
       {'a': 'slot',
        'b': [1,
@@ -223,6 +231,21 @@ def dump(data_structure):
      1,
      2,
       'banane']]
+    >>> a = [1, 2]
+    >>> _no_null_x(vformat(dump((a, (a, a)))))
+    (['<id>',
+      [1,
+       2]],
+    >>> recursive_sort(dump(freeze(TestClass(True))))
+    (('a', 'huhu'), ((('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3))), 'sub'))
+    >>> a = hash(freeze(dump(TestClass(True))))
+    >>> b = hash(freeze(dump(TestClass(True))))
+    >>> b == a
+    True
+    >>> a = freeze(dump(TestClass(True)))
+    >>> b = freeze(dump(TestClass(True)))
+    >>> b == a
+    True
     """
 
     identity_set = set()
@@ -246,7 +269,7 @@ def dump(data_structure):
             tlen = -1
             try:
                 tlen = len(data_structure)
-            except:
+            except:  # pragma: no cover
                 pass
             if tlen != -1:
                 # Except string and tuples
@@ -293,7 +316,7 @@ def dump(data_structure):
         # If item has a length we dump it
         try:
             tlen = len(data_structure)
-        except:
+        except:  # pragma: no cover
             pass
         if tlen != -1:
             # Well there are classes out in the wild that answer to len
@@ -315,8 +338,8 @@ def dump(data_structure):
                 return ret
             except:  # pragma: no cover
                 pass
-        ret.append(data_structure)
-        return ret
+        ret.append(data_structure)  # pragma: no cover
+        return ret  # pragma: no cover
 
     def clean_up(data_structure):
         if isinstance(data_structure, Meta):
@@ -369,9 +392,9 @@ def recursive_sort(data_structure):
     The function will work with many kinds of input. Dicts will be converted to
     lists of tuples.
 
-    >>> vformat(recursive_sort(dump(
+    >>> _py2_to_py3(vformat(recursive_sort(dump(
     ...     [3, 1, {'c' : 'c', 'a' : 'b', 'b' : 'a'}]
-    ... )))
+    ... ))))
     (["<class 'dict'>",
       (('a',
         'b'),
@@ -385,14 +408,6 @@ def recursive_sort(data_structure):
     ((('a', 'b'), ('b', 'a'), ('c', 'c')), 1, 3)
     >>> recursive_sort(TestClass())
     (('a', 'huhu'),)
-    >>> a = hash(freeze(dump(TestClass(True))))
-    >>> b = hash(freeze(dump(TestClass(True))))
-    >>> b == a
-    True
-    >>> a = freeze(dump(TestClass(True)))
-    >>> b = freeze(dump(TestClass(True)))
-    >>> b == a
-    True
     """
     # We don't sory primitve types
     if not isinstance(data_structure, _primitive_types):
@@ -416,7 +431,7 @@ def recursive_sort(data_structure):
         # If item has a length we sort it
         try:
             tlen = len(data_structure)
-        except:
+        except:  # pragma: no cover
             pass
         if tlen != -1:
             # Well there are classes out in the wild that answer to len
@@ -485,7 +500,11 @@ class TransparentRepr(str):
 
 def transparent_repr(string):
     """The result is __repr__ transparent. Non-printable
-    characters won't be escaped"""
+    characters won't be escaped
+
+    >>> transparent_repr(3)
+    3
+    """
     return TransparentRepr(string)
 
 
@@ -587,8 +606,8 @@ class TraversalBasedReprCompare(object):
 #........................................................
 
 
-def tree_diff(a, b, n=5, deterministic=True):
-    """Freeze and stringify any data-structure or object, traverse
+def tree_diff(a, b, n=5, sort=False):
+    """Dump any data-structure or object, traverse
     it depth-first in-order and apply a unified diff.
 
     Depth-first in-order is just like structure would be printed.
@@ -602,23 +621,70 @@ def tree_diff(a, b, n=5, deterministic=True):
     :param             b: data_structure b
     :param             n: lines of context
     :type              n: int
+    :param          sort: sort the data-structure
 
-    We need freeze stable to test this across python versions. It doesn't make
-    too much sense, but at least there are some tests.
+    ATTENTION: Sorting means changing the data-structure. Test-result may
+    differ.
+
+    >>> a = recursive_sort(freeze([
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]))
+    >>> b = recursive_sort(freeze([
+    ...     'a',
+    ...     [7, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]))
+    >>> transparent_repr("\\n".join(tree_diff(a, b).split("\\n")[2:]))
+    @@ -7,6 +7,6 @@
+           'w'),),
+         3),
+        'a'),),
+      'a',
+      (3,
+    -  4))
+    +  7))
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [7, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> transparent_repr("\\n".join(
+    ...     tree_diff(a, b, sort=True
+    ... ).split("\\n")[2:]))
+    @@ -11,6 +11,6 @@
+               '3',
+               4)]),)],
+          3)),)],
+      'a',
+      (3,
+    -  4))
+    +  7))
 
     """
-    a = freeze(a, stringify=True)
-    b = freeze(b, stringify=True)
-    if deterministic:
+    a = dump(a)
+    b = dump(b)
+    if not sort:
         a = vformat(a).split("\n")
         b = vformat(b).split("\n")
     else:
-        a = vformat(_recursive_sort(a)).split("\n")
-        b = vformat(_recursive_sort(b)).split("\n")
+        a = vformat(recursive_sort(a)).split("\n")
+        b = vformat(recursive_sort(b)).split("\n")
     return "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
 
 
-def tree_diff_assert(a, b, n=5, deterministic=True):
+def tree_diff_assert(a, b, n=5, sort=False):
     """Assert if a equals b. Freeze and stringify any data-structure or object,
     traverse it depth-first and apply a unified diff, to display the result.
 
@@ -626,18 +692,70 @@ def tree_diff_assert(a, b, n=5, deterministic=True):
     :param             b: data_structure b
     :param             n: lines of context
     :type              n: int
-    :param deterministic: Do not sort the tree
+    :param          sort: sort the data-structure
 
+    ATTENTION: Sorting means changing the data-structure. Test-result may
+    differ.
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, 'tree', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> try:
+    ...     tree_diff_assert(a, b, sort=True)
+    ... except:
+    ...     "GOT IT"
+    'GOT IT'
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set(['3', 4, frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> tree_diff_assert(a, b, sort=True)
+
+    >>> a = [
+    ...     'a',
+    ...     [3, 4],
+    ...     {'a': [3, {'w' : set([4, '3', frozenset([3,5,2])])}]},
+    ...     []
+    ... ]
+    >>> b = [
+    ...     'a',
+    ...     [4, 3],
+    ...     {'a': [3, {'w' : set(['3', 4, frozenset([2,5,3])])}]},
+    ...     []
+    ... ]
+    >>> try:
+    ...     tree_diff_assert(a, b, sort=False)
+    ... except:
+    ...     "GOT IT"
+    'GOT IT'
     """
 
-    a = freeze(a, stringify=True)
-    b = freeze(b, stringify=True)
-    if deterministic:
+    a = dump(a)
+    b = dump(b)
+    if not sort:
         a = vformat(a).split("\n")
         b = vformat(b).split("\n")
     else:
-        a = vformat(_recursive_sort(a)).split("\n")
-        b = vformat(_recursive_sort(b)).split("\n")
+        a = vformat(recursive_sort(a)).split("\n")
+        b = vformat(recursive_sort(b)).split("\n")
     msg = "\n".join(difflib.unified_diff(a, b, n=n, lineterm=""))
     if len(msg) != 0:
         assert False, "difference: \n%s" % msg
