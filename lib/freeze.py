@@ -84,7 +84,7 @@ _primitive_types = (int, float, bool) + _string_types
 _builtin_function_or_method_type = type(dict().get)
 
 
-class TestSlots(object):
+class _TestSlots(object):
     __slots__ = ("a", "b")
 
     def __init__(self):
@@ -92,11 +92,18 @@ class TestSlots(object):
         self.b = [1, 2, 3, (1, 2, 3)]
 
 
-class TestClass(object):
+class _TestClass(object):
     def __init__(self, sub=False):
         self.a = "huhu"
         if sub:
-            self.sub = TestSlots()
+            self.sub = _TestSlots()
+
+
+class _TestClass2(object):
+    def __init__(self, sub=False):
+        self.a = "huhu"
+        if sub:
+            self.sub = _TestSlots()
 
 
 def _no_null_x(string):
@@ -148,16 +155,16 @@ class IDD(object):
             return '"%s"' % self.type_
 
     def __hash__(self):
-        return self.idd
+        return hash(self.type_)
 
     def __eq__(self, other):
-        return self.idd == other.idd
+        return self.type_ == other.type_
 
     def __lt__(self, other):
         return self.idd < other.idd
 
     def __cmp__(self, other):  # pragma: no cover
-        return self.idd - other.idd
+        return self.type_.__cmp__(other.type_)
 
 
 class Meta(list):
@@ -171,7 +178,7 @@ def freeze(data_structure):
 
     :param   data_structure: The structure to convert.
 
-    >>> recursive_sort(freeze(TestClass(True)))
+    >>> recursive_sort(freeze(_TestClass(True)))
     (('a', 'huhu'), ('sub', (('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3)))))
     >>> dump((None, (None, None)))
     (None, (None, None))
@@ -261,17 +268,59 @@ def dump(data_structure):
 
     :param   data_structure: The structure to convert.
 
+    When you freeze only content counts, same content same hash
+
+    >>> a = hash(freeze(_TestClass(True)))
+    >>> b = hash(freeze(_TestClass(True)))
+    >>> b == a
+    True
+
+    >>> a = freeze(_TestClass(True))
+    >>> b = freeze(_TestClass(True))
+    >>> b == a
+    True
+
+    >>> x = _TestClass(True)
+    >>> a = freeze(dump(x))
+    >>> b = freeze(dump(x))
+    >>> b == a
+    True
+
+    When you dump-freeze only content/type counts, same content/type same hash
+    * Two object of the same type with same content will be equal
+    * Two object of the different type with same content will be different
+
+    >>> a = hash(freeze(dump(_TestClass(True))))
+    >>> b = hash(freeze(dump(_TestClass(True))))
+    >>> b == a
+    True
+
+    >>> a = freeze(dump(_TestClass(True)))
+    >>> b = freeze(dump(_TestClass(True)))
+    >>> b == a
+    True
+
+    >>> a = hash(freeze(dump(_TestClass(True))))
+    >>> b = hash(freeze(dump(_TestClass2(True))))
+    >>> b != a
+    True
+
+    >>> a = freeze(dump(_TestClass(True)))
+    >>> b = freeze(dump(_TestClass2(True)))
+    >>> b != a
+    True
+
     >>> _py2_to_py3(vformat(dump([1, {'a' : 'b'}])))
     [1,
      ["<class 'dict'>",
       {'a': 'b'}]]
 
-    >>> vformat(recursive_sort(dump(TestClass(True))))
-    ["<class 'freeze.TestClass'>",
+    >>> vformat(recursive_sort(dump(_TestClass(True))))
+    ["<class 'freeze._TestClass'>",
      (('a',
        'huhu'),
       ('sub',
-       ["<class 'freeze.TestSlots'>",
+       ["<class 'freeze._TestSlots'>",
         (('a',
           'slot'),
          ('b',
@@ -282,7 +331,7 @@ def dump(data_structure):
            2,
            3)))]))]
 
-    >>> a = TestSlots()
+    >>> a = _TestSlots()
     >>> b = [a, 1, 2, [a, "banane"]]
     >>> _no_null_x(vformat(dump(b)))
       {'a': 'slot',
@@ -301,24 +350,9 @@ def dump(data_structure):
       [1,
        2]],
 
-    >>> recursive_sort(dump(freeze(TestClass(True))))
+    >>> recursive_sort(dump(freeze(_TestClass(True))))
     (('a', 'huhu'), ((('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3))), 'sub'))
 
-    >>> a = hash(freeze(dump(TestClass(True))))
-    >>> b = hash(freeze(dump(TestClass(True))))
-    >>> b == a
-    True
-
-    >>> a = freeze(dump(TestClass(True)))
-    >>> b = freeze(dump(TestClass(True)))
-    >>> b != a
-    True
-
-    >>> x = TestClass(True)
-    >>> a = freeze(dump(x))
-    >>> b = freeze(dump(x))
-    >>> b == a
-    True
     >>> dump((None, (None, None)))
     (None, (None, None))
     """
@@ -476,7 +510,7 @@ def recursive_sort(data_structure):
      3)
     >>> recursive_sort([3, 1, {'c' : 'c', 'a' : 'b', 'b' : 'a'}])
     ((('a', 'b'), ('b', 'a'), ('c', 'c')), 1, 3)
-    >>> recursive_sort(TestClass())
+    >>> recursive_sort(_TestClass())
     (('a', 'huhu'),)
     """
     # We don't sory primitve types
@@ -539,8 +573,8 @@ def recursive_sort(data_structure):
 def stable_hash(data_structure):
     """Stable hash does: hash(recursive_sort(freeze(data_structure)))
 
-    >>> a = stable_hash(TestClass(True))
-    >>> b = stable_hash(TestClass(True))
+    >>> a = stable_hash(_TestClass(True))
+    >>> b = stable_hash(_TestClass(True))
     >>> a == b
     True
     """
@@ -550,8 +584,8 @@ def stable_hash(data_structure):
 def recursive_hash(data_structure):
     """Recursive hash does: hash(freeze(data_structure))
 
-    >>> a = recursive_hash(TestClass(True))
-    >>> b = recursive_hash(TestClass(True))
+    >>> a = recursive_hash(_TestClass(True))
+    >>> b = recursive_hash(_TestClass(True))
     >>> a == b
     True
     """
