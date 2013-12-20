@@ -7,10 +7,12 @@ def do_setup(cython=False):
         if os.environ['USE_CYTHON'] == "false":
             cython = False
     if cython:
+        print("Installing with cython\n")
         from Cython.Build import cythonize
         py_modules  = []
         ext_modules = cythonize("lib/freeze.py")
     else:
+        print("Installing without cython\n")
         py_modules  = ['freeze']
         ext_modules = []
 
