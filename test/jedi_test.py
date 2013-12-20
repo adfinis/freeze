@@ -19,3 +19,7 @@ class JediTest(unittest.TestCase):
         self.assertGreater(len(b), 0)
         self.assertGreater(len(c), 0)
         self.assertGreater(size.asizeof(b), 2038400)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    JediTest().test_freeze_with_jedi()
