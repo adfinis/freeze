@@ -156,6 +156,9 @@ class IDD(object):
     def __lt__(self, other):
         return self.idd < other.idd
 
+    def __cmp__(self, other):  # pragma: no cover
+        return self.idd - other.idd
+
 
 class Meta(list):
     __slots__ = ()
