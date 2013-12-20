@@ -130,11 +130,9 @@ class Meta(list):
 def freeze(data_structure):
     """Freeze tries to convert any data-structure in a hierarchy of tuples.
     Tuples are comparable/sortable/hashable, you can use this with
-    with recursive sort and or dump. freeze has no recursion detection.
+    with recursive_sort(). freeze has no recursion detection.
 
     :param   data_structure: The structure to convert.
-
-    Typical usage for unittesting: # TODO: recsort(freeze(dump(x)))
 
     >>> recursive_sort(freeze(TestClass(True)))
     (('a', 'huhu'), ('sub', (('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3)))))
@@ -196,12 +194,11 @@ def dump(data_structure):
 
     :param   data_structure: The structure to convert.
 
-    Typical usage for unittesting: # TODO: recsort(freeze(dump(x)))
-
     >>> _py2_to_py3(vformat(dump([1, {'a' : 'b'}])))
     [1,
      ["<class 'dict'>",
       {'a': 'b'}]]
+
     >>> vformat(recursive_sort(dump(TestClass(True))))
     ["<class 'freeze.TestClass'>",
      (('a',
@@ -217,6 +214,7 @@ def dump(data_structure):
             3),
            2,
            3)))]))]
+
     >>> a = TestSlots()
     >>> b = [a, 1, 2, [a, "banane"]]
     >>> _no_null_x(vformat(dump(b)))
@@ -231,21 +229,26 @@ def dump(data_structure):
      1,
      2,
       'banane']]
+
     >>> a = [1, 2]
     >>> _no_null_x(vformat(dump((a, (a, a)))))
     (['<id>',
       [1,
        2]],
+
     >>> recursive_sort(dump(freeze(TestClass(True))))
     (('a', 'huhu'), ((('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3))), 'sub'))
+
     >>> a = hash(freeze(dump(TestClass(True))))
     >>> b = hash(freeze(dump(TestClass(True))))
     >>> b == a
     True
+
     >>> a = freeze(dump(TestClass(True)))
     >>> b = freeze(dump(TestClass(True)))
     >>> b == a
     True
+
     """
 
     identity_set = set()
@@ -520,7 +523,7 @@ def vformat(*args, **kwargs):
 def traverse_frozen_data(data_structure):
     """Yields the leaves of the frozen data-structure pre-order.
 
-    It will produce the same order as one would write data-structure."""
+    It will produce the same order as one would write the data-structure."""
     parent_stack = [data_structure]
     while parent_stack:
         node = parent_stack.pop(0)
@@ -612,18 +615,13 @@ def tree_diff(a, b, n=5, sort=False):
 
     Depth-first in-order is just like structure would be printed.
 
-    Annotation:
-
-    "(           x"       Going down to level: x
-    ")           x"       Going one level up from: x
-
     :param             a: data_structure a
     :param             b: data_structure b
     :param             n: lines of context
     :type              n: int
     :param          sort: sort the data-structure
 
-    ATTENTION: Sorting means changing the data-structure. Test-result may
+    ATTENTION: Sorting means changing the data-structure. The test-result may
     differ.
 
     >>> a = recursive_sort(freeze([
@@ -685,7 +683,7 @@ def tree_diff(a, b, n=5, sort=False):
 
 
 def tree_diff_assert(a, b, n=5, sort=False):
-    """Assert if a equals b. Freeze and stringify any data-structure or object,
+    """Assert if a equals b. Dump any data-structure or object,
     traverse it depth-first and apply a unified diff, to display the result.
 
     :param             a: data_structure a
@@ -694,7 +692,7 @@ def tree_diff_assert(a, b, n=5, sort=False):
     :type              n: int
     :param          sort: sort the data-structure
 
-    ATTENTION: Sorting means changing the data-structure. Test-result may
+    ATTENTION: Sorting means changing the data-structure. The test-result may
     differ.
 
     >>> a = [
