@@ -170,6 +170,8 @@ def freeze(data_structure):
 
     >>> recursive_sort(freeze(TestClass(True)))
     (('a', 'huhu'), ('sub', (('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3)))))
+    >>> dump((None, (None, None)))
+    (None, (None, None))
     """
     def freeze_helper(data_structure):
         # We don't freeze primitive types
@@ -314,25 +316,22 @@ def dump(data_structure):
     >>> b = freeze(dump(x))
     >>> b == a
     True
+    >>> dump((None, (None, None)))
+    (None, (None, None))
     """
 
     identity_set = set()
     dup_set      = set()
 
     def dump_helper(data_structure):
+        if data_structure is None:
+            return None
         # Primitive types don't need processing
         if isinstance(data_structure, _primitive_types):
             return data_structure
         # Cycle detection
         idd = id(data_structure)
         if idd in identity_set:
-            dup_set.add(idd)
-            # We do not recurse into dictizable objects
-            if (
-                hasattr(data_structure, "__dict__") or
-                hasattr(data_structure, "__slots__")
-            ):
-                return "R: %s at 0x%X" % (type(data_structure), idd)
             # We do not recurse into containers
             tlen = -1
             try:
@@ -340,14 +339,21 @@ def dump(data_structure):
             except:  # pragma: no cover
                 pass
             if tlen != -1:
+                # We do not recurse into dictizable objects
+                if (
+                    hasattr(data_structure, "__dict__") or
+                    hasattr(data_structure, "__slots__")
+                ):
+                    dup_set.add(idd)
+                    return "R: %s at 0x%X" % (type(data_structure), idd)
                 # Except string and tuples
                 if not isinstance(data_structure, _ignore_types):
-                    # I can't test this on python3. I would need a type that is
-                    # not handled above. Namespaces are the only thing I know
-                    # and python3 doesn't dump namespaces :(
-                    return "R: %s at 0x%X" % (
-                        type(data_structure), idd
-                    )  # pragma: no cover
+                    dup_set.add(idd)
+                    return "R: %s at 0x%X" % (type(data_structure), idd)
+            else:
+                dup_set.add(idd)
+                return "R: %s at 0x%X" % (type(data_structure), idd)
+
         else:
             identity_set.add(idd)
         ret = Meta()
