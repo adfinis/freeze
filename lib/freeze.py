@@ -135,6 +135,8 @@ class IDD(object):
     >>> b = IDD("x", 1)
     >>> a == b
     True
+    >>> b == 3
+    False
     """
     __slots__ = ('idd', 'type_', 'is_visible', 'is_target')
 
