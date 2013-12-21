@@ -27,23 +27,14 @@ def do_setup(cython=False):
 
         author = "Jean-Louis Fuchs",
         author_email = "ganwell@fangorn.ch",
-        description = "Freeze - hash / sort / compare / diff anything",
+        description = "Freeze - dump / hash / sort / compare / diff anything",
         license = "Modified BSD",
         long_description = """
-ATTENTION: I now have enough experience to design clean interface for freeze.
-So if there is no bugfix version, the next version will break things.
-
-* freeze_fast will become freeze (because only cycle free datastructures can
-  truely be frozen
-* freeze becomes dump, freeze_stable becomes dump_stable
--> Their purpose is unit-testing or dumping for analysis
--> There will be an option to select unit-test or dump mode
-
 Freeze the state of data-structures and objects for data-analysis or testing
 (diffing data-structures). Frozen data-structures consist of only tuples
-and these are comparable/sortable/hashable. The freeze method can be used
-for many purposes for example implement __hash__ for your complex object
-very fast. freeze_stable and flatten are usable for testing and analysis.""",
+and these are comparable/sortable/hashable. The freeze() function can be used
+for many purposes for example implement __hash__() for your complex object
+very fast. dump() is intended for testing and analysis.""",
         keywords = "freeze state hash sort compare unittest",
         url = "https://github.com/adfinis-sygroup/freeze",
         classifiers = [

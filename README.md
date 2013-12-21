@@ -1,4 +1,4 @@
-Freeze - hash / sort / compare / diff anything
+Freeze - dump / hash / sort / compare / diff anything
 ==============================================
 
 [![Build Status](https://travis-ci.org/adfinis-sygroup/freeze.png?branch=master)](https://travis-ci.org/adfinis-sygroup/freeze)
