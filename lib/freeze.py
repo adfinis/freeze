@@ -158,6 +158,8 @@ class IDD(object):
         return hash(self.type_)
 
     def __eq__(self, other):
+        if not isinstance(other, IDD):
+            return False
         return self.type_ == other.type_
 
     def __lt__(self, other):
