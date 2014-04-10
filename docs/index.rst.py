@@ -9,9 +9,6 @@ tmpl = """
 Freeze - hash / sort / compare / diff anything
 ==============================================
 
-.. toctree::
-   :maxdepth: 2
-
 .. autosummary::
 
    %s
