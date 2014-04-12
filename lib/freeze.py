@@ -680,7 +680,6 @@ class TraversalBasedReprCompare(object):
 
     def _cmp(self, other):
         """Generic cmp method to support python 2/3"""
-        #import pdb; pdb.set_trace()
         self_gen  = traverse_frozen_data(self.payload)
         other_gen = traverse_frozen_data(other.payload)
         while True:
@@ -874,4 +873,4 @@ if __name__ == "__main__":  # pragma: no cover
     import freeze
     result = doctest.testmod(freeze)
     sys.exit(result.failed)
-# lint_ignore=W0702,R0912,R0911,W0404
+# pylama:ignore=W0702,R0912,R0911,W0404

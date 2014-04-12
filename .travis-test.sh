@@ -10,4 +10,4 @@ else
 	nosetests --with-doctest --doctest-tests --cover-package=freeze --with-coverage --cover-tests --cover-erase --cover-min-percentage=100
 fi
 cd lib
-pylama -l pep8,pyflakes,pylint -i E203,E272,E221,E251,E202,E271,C0302,W0511,F0401
+pylama -l pep8,pyflakes -i E203,E272,E221,E251,E202,E271,C0302,W0511,F0401
