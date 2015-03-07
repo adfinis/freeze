@@ -26,7 +26,7 @@ def do_setup(cython=False):
 
     setup(
         name = "freeze",
-        version = "1.0.6",
+        version = "1.0.7",
         package_dir = {'': 'lib'},
         packages    = packages,
         ext_modules = ext_modules,
