@@ -48,9 +48,9 @@ import gzip
 import difflib
 import inspect
 
-if six.PY3:
+if six.PY3:  # pragma: no cover
     from .fpprint import pformat
-else:
+else:  # pragma: no cover
     from pprint import pformat
 
 # These imports are need for doc tests.
@@ -109,6 +109,14 @@ class _TestClass2(object):
         self.a = "huhu"
         if sub:
             self.sub = _TestSlots()
+
+
+class _TestClassWithLen(object):
+    def __init__(self):
+        self.a = "huhu"
+
+    def __len__(self):
+        return 1
 
 
 def _no_null_x(string):
@@ -370,6 +378,19 @@ def dump(data_structure):
 
     >>> dump((None, (None, None)))
     (None, (None, None))
+
+    >>> s = _TestClassWithLen()
+    >>> a = [s, s]
+    >>> _no_null_x(vformat(dump(a)))
+      {'a': 'huhu'}],
+
+    >>> s = (1, 2)
+    >>> a = [s, s]
+    >>> _no_null_x(vformat(dump(a)))
+    [(1,
+      2),
+     (1,
+      2)]
     """
 
     identity_set = set()
@@ -395,12 +416,15 @@ def dump(data_structure):
                 if (
                     hasattr(data_structure, "__dict__") or
                     hasattr(data_structure, "__slots__")
-                ):  # pragma: no cover
+                ):
                     # Special case where __len__ is implemented
                     dup_set.add(idd)
                     return "R: %s at 0x%X" % (type(data_structure), idd)
                 # Except string and tuples
-                if not isinstance(data_structure, _ignore_types):
+                if not isinstance(
+                        data_structure,
+                        _ignore_types
+                ):  # pragma: no cover
                     dup_set.add(idd)
                     return "R: %s at 0x%X" % (type(data_structure), idd)
             else:

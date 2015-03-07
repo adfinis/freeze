@@ -1,3 +1,6 @@
+
+# I had to fork this because of incompatible changes in python 3.4
+
 #  Author:      Fred L. Drake, Jr.
 #               fdrake@acm.org
 #
@@ -47,30 +50,29 @@ _id = id
 _len = len
 _type = type
 
-
-def pprint(object, stream=None, indent=1, width=80, depth=None):
+def pprint(object, stream=None, indent=1, width=80, depth=None):  # pragma: no cover
     """Pretty-print a Python object to a stream [default is sys.stdout]."""
     printer = PrettyPrinter(
         stream=stream, indent=indent, width=width, depth=depth)
     printer.pprint(object)
 
-def pformat(object, indent=1, width=80, depth=None):
+def pformat(object, indent=1, width=80, depth=None):  # pragma: no cover
     """Format a Python object into a pretty-printed representation."""
     return PrettyPrinter(indent=indent, width=width, depth=depth).pformat(object)
 
-def saferepr(object):
+def saferepr(object):  # pragma: no cover
     """Version of repr() which can handle recursive data structures."""
     return _safe_repr(object, {}, None, 0)[0]
 
-def isreadable(object):
+def isreadable(object):  # pragma: no cover
     """Determine if saferepr(object) is readable by eval()."""
     return _safe_repr(object, {}, None, 0)[1]
 
-def isrecursive(object):
+def isrecursive(object): # pragma: no cover
     """Determine if object requires a recursive representation."""
     return _safe_repr(object, {}, None, 0)[2]
 
-class _safe_key:
+class _safe_key:  # pragma: no cover
     """Helper function for key functions when sorting unorderable objects.
 
     The wrapped-object will fallback to an Py2.x style comparison for
@@ -96,11 +98,11 @@ class _safe_key:
                  (str(type(other.obj)), id(other.obj))
         return rv
 
-def _safe_tuple(t):
+def _safe_tuple(t):  # pragma: no cover
     "Helper function for comparing 2-tuples"
     return _safe_key(t[0]), _safe_key(t[1])
 
-class PrettyPrinter:
+class PrettyPrinter:  # pragma: no cover
     def __init__(self, indent=1, width=80, depth=None, stream=None):
         """Handle pretty printing operations onto a stream using a set of
         configured parameters.
@@ -261,7 +263,7 @@ class PrettyPrinter:
 
 # Return triple (repr_string, isreadable, isrecursive).
 
-def _safe_repr(object, context, maxlevels, level):
+def _safe_repr(object, context, maxlevels, level):  # pragma: no cover
     typ = _type(object)
     if typ is str:
         if 'locale' not in _sys.modules:
@@ -346,12 +348,12 @@ def _safe_repr(object, context, maxlevels, level):
     return rep, (rep and not rep.startswith('<')), False
 
 
-def _recursion(object):
+def _recursion(object):  # pragma: no cover
     return ("<Recursion on %s with id=%s>"
             % (_type(object).__name__, _id(object)))
 
 
-def _perfcheck(object=None):
+def _perfcheck(object=None):  # pragma: no cover
     import time
     if object is None:
         object = [("string", (1, 2), [3, 4], {5: 6, 7: 8})] * 100000
@@ -364,5 +366,5 @@ def _perfcheck(object=None):
     print("_safe_repr:", t2 - t1)
     print("pformat:", t3 - t2)
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     _perfcheck()

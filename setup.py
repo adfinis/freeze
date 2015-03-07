@@ -1,5 +1,6 @@
 from setuptools import setup
 import os
+import six
 
 
 def do_setup(cython=False):
@@ -10,7 +11,15 @@ def do_setup(cython=False):
         print("Installing with cython\n")
         from Cython.Build import cythonize
         py_modules  = []
-        ext_modules = cythonize("lib/freeze.py")
+        if six.PY3:
+            ext_modules = cythonize([
+                "lib/freeze/__init__.py",
+                "lib/freeze/fpprint.py",
+            ])
+        else:
+            ext_modules = cythonize([
+                "lib/freeze/__init__.py",
+            ])
     else:
         print("Installing without cython\n")
         py_modules  = ['freeze']
