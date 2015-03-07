@@ -119,12 +119,6 @@ class _TestClassWithLen(object):
         return 1
 
 
-def _no_init(string):
-    return TransparentRepr(
-        string.replace("__init__.", "")
-    )
-
-
 def _no_null_x(string):
     lines = string.split("\n")
     new_lines = []
@@ -340,12 +334,12 @@ def dump(data_structure):
      ["<class 'dict'>",
       {'a': 'b'}]]
 
-    >>> _no_init(vformat(recursive_sort(dump(_TestClass(True)))))
-    ["<class 'freeze._TestClass'>",
+    >>> vformat(recursive_sort(dump(_TestClass(True))))
+    ["<class 'freeze.xfreeze._TestClass'>",
      (('a',
        'huhu'),
       ('sub',
-       ["<class 'freeze._TestSlots'>",
+       ["<class 'freeze.xfreeze._TestSlots'>",
         (('a',
           'slot'),
          ('b',
