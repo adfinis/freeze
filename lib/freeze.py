@@ -56,16 +56,17 @@ del nothing
 
 __all__ = [
     "freeze",
-    "object_to_items",
+    "vformat",
     "dump",
     "tree_diff_assert",
+    "tree_diff",
     "stable_hash",
     "recursive_hash",
-    "tree_diff",
-    "vformat",
+    "recursive_sort",
     "transparent_repr",
     "traverse_frozen_data",
     "TraversalBasedReprCompare",
+    "object_to_items",
 ]
 
 

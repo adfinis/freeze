@@ -11,16 +11,17 @@ Freeze - hash / sort / compare / diff anything
 
    
    freeze.freeze
-   freeze.object_to_items
+   freeze.vformat
    freeze.dump
    freeze.tree_diff_assert
+   freeze.tree_diff
    freeze.stable_hash
    freeze.recursive_hash
-   freeze.tree_diff
-   freeze.vformat
+   freeze.recursive_sort
    freeze.transparent_repr
    freeze.traverse_frozen_data
    freeze.TraversalBasedReprCompare
+   freeze.object_to_items
 
 .. automodule:: freeze
    :members:
