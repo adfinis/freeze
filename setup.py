@@ -18,7 +18,7 @@ def do_setup(cython=False):
             ])
         else:
             ext_modules = cythonize([
-                "lib/freeze/__init__.py",
+                "lib/freeze/freeze.py",
             ])
     else:
         print("Installing without cython\n")
@@ -26,7 +26,7 @@ def do_setup(cython=False):
 
     setup(
         name = "freeze",
-        version = "1.0.5",
+        version = "1.0.6",
         package_dir = {'': 'lib'},
         packages    = packages,
         ext_modules = ext_modules,
