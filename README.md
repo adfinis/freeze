@@ -3,15 +3,12 @@ Freeze - dump / hash / sort / compare / diff anything
 
 [![Build Status](https://travis-ci.org/adfinis-sygroup/freeze.png?branch=master)](https://travis-ci.org/adfinis-sygroup/freeze)
 
-This release breaks the API:
+Freeze the state of data-structures and objects for data-analysis or testing
+(diffing data-structures). Frozen data-structures consist of only tuples and
+these are comparable/sortable/hashable. The freeze() function can be used for
+many purposes for example implement __hash__() for your complex object very
+fast. dump() is intended for testing and analysis.
 
-* freeze_fast became freeze (because only cycle free datastructures can
-  truely be frozen
-* freeze_* became dump
-
-Freeze the state of data-structures and objects for data-analysis or testing (diffing data-structures).
+Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
 
 Docs: https://freeze.readthedocs.org/en/latest/
-
-Dev version docs: https://freeze.readthedocs.org/en/dev/
-
