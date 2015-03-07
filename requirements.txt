@@ -2,4 +2,4 @@ six
 pylama
 coverage
 pympler
-git+https://github.com/davidhalter/jedi.git
+jedi
