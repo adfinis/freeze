@@ -10,7 +10,7 @@ def do_setup(cython=False):
     if cython:
         print("Installing with cython\n")
         from Cython.Build import cythonize
-        py_modules  = []
+        packages = []
         if six.PY3:
             ext_modules = cythonize([
                 "lib/freeze/__init__.py",
@@ -22,14 +22,14 @@ def do_setup(cython=False):
             ])
     else:
         print("Installing without cython\n")
-        py_modules  = ['freeze']
+        packages    = ['freeze']
         ext_modules = []
 
     setup(
         name = "freeze",
-        version = "1.0.0",
+        version = "1.0.4",
         package_dir = {'': 'lib'},
-        py_modules = py_modules,
+        packages    = packages,
         ext_modules = ext_modules,
 
         install_requires = ['six'],
