@@ -42,12 +42,16 @@ Run doctests with "python -m freeze"
 
 
 import six
-import pprint
 import sys
 import json
 import gzip
 import difflib
 import inspect
+
+if six.PY3:
+    from .fpprint import pformat
+else:
+    from pprint import pformat
 
 # These imports are need for doc tests.
 nothing = json.__file__
@@ -71,9 +75,9 @@ __all__ = [
 
 
 try:
-    _ignore_types = (six.string_types, tuple, bytes)
+    _ignore_types = (six.string_types, tuple, bytes, type([]))
 except:  # pragma: no cover
-    _ignore_types = (six.string_types, tuple)
+    _ignore_types = (six.string_types, tuple, type([]))
 
 try:
     _string_types = (six.string_types,  bytes)
@@ -354,8 +358,12 @@ def dump(data_structure):
 
     >>> a = [1, 2]
     >>> _no_null_x(vformat(dump((a, (a, a)))))
+    ([1,
+      2],
+     ([1,
+       2],
       [1,
-       2]],
+       2]))
 
     >>> recursive_sort(dump(freeze(_TestClass(True))))
     (('a', 'huhu'), ((('a', 'slot'), ('b', (1, (1, 2, 3), 2, 3))), 'sub'))
@@ -625,7 +633,7 @@ def vformat(*args, **kwargs):
     data-structures. The result is __repr__ transparent. Non-printable
     characters won't be escaped"""
     return TransparentRepr(
-        pprint.pformat(*args, width=1, **kwargs)
+        pformat(*args, width=1, **kwargs)
     )
 
 
