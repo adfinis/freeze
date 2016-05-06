@@ -37,13 +37,14 @@ saferepr()
 
 """
 import six
+
 if six.PY3:  # pragma: no cover
 
     import sys as _sys
     from collections import OrderedDict as _OrderedDict
     from io import StringIO as _StringIO
 
-    __all__ = ["pprint","pformat","isreadable","isrecursive","saferepr",
+    __all__ = ["pprint", "pformat", "isreadable", "isrecursive", "saferepr",
                "PrettyPrinter"]
 
 # cache these for faster access:
@@ -60,7 +61,9 @@ if six.PY3:  # pragma: no cover
 
     def pformat(object, indent=1, width=80, depth=None):
         """Format a Python object into a pretty-printed representation."""
-        return PrettyPrinter(indent=indent, width=width, depth=depth).pformat(object)
+        return PrettyPrinter(
+            indent=indent, width=width, depth=depth
+        ).pformat(object)
 
     def saferepr(object):
         """Version of repr() which can handle recursive data structures."""
@@ -187,24 +190,38 @@ if six.PY3:  # pragma: no cover
                         rep = self._repr(key, context, level)
                         write(rep)
                         write(': ')
-                        self._format(ent, stream, indent + _len(rep) + 2,
-                                      allowance + 1, context, level)
+                        self._format(
+                            ent,
+                            stream,
+                            indent + _len(rep) + 2,
+                            allowance + 1,
+                            context,
+                            level
+                        )
                         if length > 1:
                             for key, ent in items[1:]:
                                 rep = self._repr(key, context, level)
-                                write(',\n%s%s: ' % (' '*indent, rep))
-                                self._format(ent, stream, indent + _len(rep) + 2,
-                                              allowance + 1, context, level)
+                                write(',\n%s%s: ' % (' ' * indent, rep))
+                                self._format(
+                                    ent,
+                                    stream,
+                                    indent + _len(rep) + 2,
+                                    allowance + 1,
+                                    context, level
+                                )
                         indent = indent - self._indent_per_level
                         del context[objid]
                     write('}')
                     return
 
-                if ((issubclass(typ, list) and r is list.__repr__) or
-                    (issubclass(typ, tuple) and r is tuple.__repr__) or
-                    (issubclass(typ, set) and r is set.__repr__) or
-                    (issubclass(typ, frozenset) and r is frozenset.__repr__)
-                   ):
+                if (
+                        (issubclass(typ, list) and r is list.__repr__) or
+                        (issubclass(typ, tuple) and r is tuple.__repr__) or
+                        (issubclass(typ, set) and r is set.__repr__) or
+                        (issubclass(
+                            typ, frozenset
+                        ) and r is frozenset.__repr__)
+                ):
                     length = _len(object)
                     if issubclass(typ, list):
                         write('[')
@@ -234,9 +251,15 @@ if six.PY3:  # pragma: no cover
                                      context, level)
                         if length > 1:
                             for ent in object[1:]:
-                                write(',\n' + ' '*indent)
-                                self._format(ent, stream, indent,
-                                              allowance + 1, context, level)
+                                write(',\n' + ' ' * indent)
+                                self._format(
+                                    ent,
+                                    stream,
+                                    indent,
+                                    allowance + 1,
+                                    context,
+                                    level
+                                )
                         indent = indent - self._indent_per_level
                         del context[objid]
                     if issubclass(typ, tuple) and length == 1:
@@ -304,8 +327,12 @@ if six.PY3:  # pragma: no cover
             saferepr = _safe_repr
             items = sorted(object.items(), key=_safe_tuple)
             for k, v in items:
-                krepr, kreadable, krecur = saferepr(k, context, maxlevels, level)
-                vrepr, vreadable, vrecur = saferepr(v, context, maxlevels, level)
+                krepr, kreadable, krecur = saferepr(
+                    k, context, maxlevels, level
+                )
+                vrepr, vreadable, vrecur = saferepr(
+                    v, context, maxlevels, level
+                )
                 append("%s: %s" % (krepr, vrepr))
                 readable = readable and kreadable and vreadable
                 if krecur or vrecur:
@@ -337,7 +364,9 @@ if six.PY3:  # pragma: no cover
             append = components.append
             level += 1
             for o in object:
-                orepr, oreadable, orecur = _safe_repr(o, context, maxlevels, level)
+                orepr, oreadable, orecur = _safe_repr(
+                    o, context, maxlevels, level
+                )
                 append(orepr)
                 if not oreadable:
                     readable = False
@@ -349,11 +378,9 @@ if six.PY3:  # pragma: no cover
         rep = repr(object)
         return rep, (rep and not rep.startswith('<')), False
 
-
     def _recursion(object):
         return ("<Recursion on %s with id=%s>"
                 % (_type(object).__name__, _id(object)))
-
 
     def _perfcheck(object=None):
         import time

@@ -41,12 +41,13 @@ Run doctests with "python -m freeze"
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-import six
-import sys
-import json
-import gzip
 import difflib
+import gzip
 import inspect
+import json
+import sys
+
+import six
 
 if six.PY3:  # pragma: no cover
     from .fpprint import pformat
@@ -903,7 +904,7 @@ def tree_diff_assert(a, b, n=5, sort=False):
 
 if __name__ == "__main__":  # pragma: no cover
     import doctest
-    import freeze
+    import freeze  # noqa
     result = doctest.testmod(freeze)
     sys.exit(result.failed)
 # pylama:ignore=W0702,R0912,R0911,W0404
