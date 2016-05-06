@@ -1,0 +1,31 @@
+Source: freeze
+Section: python
+Priority: optional
+Maintainer: Jean-Louis Fuchs - Adfinis-SyGroup <jean-louis.fuchs@adfinis-sygroup.ch>
+Uploaders: Jean-Louis Fuchs - Adfinis-SyGroup <jean-louis.fuchs@adfinis-sygroup.ch>
+Build-Depends: debhelper (>= 9), dh-python, python-all, python3-all,
+ python-setuptools, python3-setuptools
+Standards-Version: 3.9.4
+Homepage: https://github.com/adfinis-sygroup/freeze
+Vcs-Git: https://github.com/adfinis-sygroup/freeze
+Vcs-Browser: https://github.com/adfinis-sygroup/freeze
+
+Package: python-finja
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, python-pkg-resources
+Description: Freeze - dump / hash / sort / compare / diff anything
+ Freeze the state of data-structures and objects for data-analysis or testing
+ (diffing data-structures). Frozen data-structures consist of only tuples
+ and these are comparable/sortable/hashable. The freeze() function can be used
+ for many purposes for example implement __hash__() for your complex object
+ very fast. dump() is intended for testing and analysis.""",
+
+Package: python3-finja
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-pkg-resources
+Description: Freeze - dump / hash / sort / compare / diff anything
+ Freeze the state of data-structures and objects for data-analysis or testing
+ (diffing data-structures). Frozen data-structures consist of only tuples
+ and these are comparable/sortable/hashable. The freeze() function can be used
+ for many purposes for example implement __hash__() for your complex object
+ very fast. dump() is intended for testing and analysis.""",
