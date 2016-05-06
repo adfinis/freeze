@@ -10,7 +10,7 @@ Homepage: https://github.com/adfinis-sygroup/freeze
 Vcs-Git: https://github.com/adfinis-sygroup/freeze
 Vcs-Browser: https://github.com/adfinis-sygroup/freeze
 
-Package: python-finja
+Package: python-freeze
 Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}, python-pkg-resources
 Description: Freeze - dump / hash / sort / compare / diff anything
@@ -20,7 +20,7 @@ Description: Freeze - dump / hash / sort / compare / diff anything
  for many purposes for example implement __hash__() for your complex object
  very fast. dump() is intended for testing and analysis.""",
 
-Package: python3-finja
+Package: python3-freeze
 Architecture: all
 Depends: ${misc:Depends}, ${python3:Depends}, python3-pkg-resources
 Description: Freeze - dump / hash / sort / compare / diff anything
