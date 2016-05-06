@@ -1,6 +1,12 @@
-pyaptly (1.0.0-1) stable; urgency=low
+freeze (1.0.9-1) stable; urgency=low
 
-  * Added CHANGELOG
-   - https://github.com/adfinis-sygroup/pyaptly/commit/9f8ea2e
+  * Added pypy to travis
+   - https://github.com/adfinis-sygroup/freeze/commit/1211264
+  * Remove 2.6 from travis because py.test doesn't work
+   - https://github.com/adfinis-sygroup/freeze/commit/85d5757
+  * PEP8 and Isort
+   - https://github.com/adfinis-sygroup/freeze/commit/da58571
+  * Updated freeze to use pyproject
+   - https://github.com/adfinis-sygroup/freeze/commit/07494b6
 
- -- Jean-Louis Fuchs <ganwell@fangorn.ch>  Fri, 06 May 2016 19:40:42 +0000
+ -- Jean-Louis Fuchs <ganwell@fangorn.ch>  Fri, 06 May 2016 21:03:35 +0000
