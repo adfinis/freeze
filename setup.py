@@ -1,6 +1,8 @@
 from setuptools import setup
 import os
-import six
+import sys
+
+version = sys.version_info[0]
 
 __version__  = None
 version_file = "freeze/version.py"
@@ -17,7 +19,7 @@ def do_setup(cython=False):
     if cython:
         print("Installing with cython\n")
         from Cython.Build import cythonize
-        if six.PY3:
+        if version > 2:
             ext_modules = cythonize([
                 "freeze/xfreeze.py",
                 "freeze/fpprint.py",
