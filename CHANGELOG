@@ -1,6 +1,19 @@
 # This file is python syntax
 CHANGELOG = [
     {
+        'version' : "1.0.10",
+        'date'    : "2016-05-07T14:14:11+0000",
+        'author'  : "Jean-Louis Fuchs <ganwell@fangorn.ch>",
+        'changes' : [
+            "Merge pull request #2 from ganwell/master",
+            [
+                "https://github.com/adfinis-sygroup/freeze/pull/2",
+                "Change to public documentation location",
+            ],
+
+        ],
+    },
+    {
         'version' : "1.0.9",
         'date'    : "2016-05-06T21:03:35+0000",
         'author'  : "Jean-Louis Fuchs <ganwell@fangorn.ch>",
