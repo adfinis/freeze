@@ -1,3 +1,11 @@
+freeze (1.0.10-1) stable; urgency=low
+
+  * Merge pull request #2 from ganwell/master
+   - https://github.com/adfinis-sygroup/freeze/pull/2
+   - Change to public documentation location
+
+ -- Jean-Louis Fuchs <ganwell@fangorn.ch>  Sat, 07 May 2016 14:14:11 +0000
+
 freeze (1.0.9-1) stable; urgency=low
 
   * Added pypy to travis
