@@ -15,4 +15,4 @@ Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
 
 `Read the Docs`_
 
-.. _`Read the Docs`: https://freeze.readthedocs.org/en/latest/
+.. _`Read the Docs`: https://docs.adfinis-sygroup.ch/public/freeze/

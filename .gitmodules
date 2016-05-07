@@ -1,3 +1,6 @@
 [submodule "pyproject"]
 	path = pyproject
 	url = https://github.com/adfinis-sygroup/pyproject.git
+[submodule "doc/adsy-sphinx-template"]
+	path = doc/adsy-sphinx-template
+	url = https://github.com/adfinis-sygroup/adsy-sphinx-template.git

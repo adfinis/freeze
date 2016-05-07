@@ -23,7 +23,7 @@ Freeze - hash / sort / compare / diff anything
    freeze.TraversalBasedReprCompare
    freeze.object_to_items
 
-.. automodule:: freeze
+.. automodule:: freeze.xfreeze
    :members:
 
 Indices and tables
