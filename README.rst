@@ -22,3 +22,26 @@ fast. dump() is intended for testing and analysis.
 
 Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
 
+Install Debian/Ubuntu
+=====================
+
+Sources:
+
+.. code-block:: text
+
+   deb https://aptly.ad-sy.ch/adsy-public/debian wheezy main
+
+   deb https://aptly.ad-sy.ch/adsy-public/debian jessie main
+
+   deb https://aptly.ad-sy.ch/adsy-public/ubuntu trusty main
+
+   deb https://aptly.ad-sy.ch/adsy-public/ubuntu vivid main
+
+   deb https://aptly.ad-sy.ch/adsy-public/ubuntu xenial main
+
+Install:
+
+.. code-block:: bash
+
+   apt-get update
+   apt-get install python-freeze
