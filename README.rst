@@ -21,28 +21,3 @@ many purposes for example implement __hash__() for your complex object very
 fast. dump() is intended for testing and analysis.
 
 Authors: Jean-Louis Fuchs <ganwell@fangorn.ch> https://github.com/ganwell
-
-Install Debian/Ubuntu
-=====================
-
-Sources:
-
-.. code-block:: text
-
-   deb http://aptly.adfinis-sygroup.ch/adsy-public/debian wheezy main
-
-   deb http://aptly.adfinis-sygroup.ch/adsy-public/debian jessie main
-
-   deb http://aptly.adfinis-sygroup.ch/adsy-public/ubuntu trusty main
-
-   deb http://aptly.adfinis-sygroup.ch/adsy-public/ubuntu vivid main
-
-   deb http://aptly.adfinis-sygroup.ch/adsy-public/ubuntu xenial main
-
-Install:
-
-.. code-block:: bash
-
-   wget -O - http://aptly.adfinis-sygroup.ch/aptly.asc | apt-key add -
-   apt-get update
-   apt-get install python-freeze

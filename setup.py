@@ -41,7 +41,7 @@ def do_setup(cython=False):
         install_requires = ['six'],
 
         author = "Adfinis-SyGroup",
-        author_email = "https://adfinis-sygroup.ch/",
+        author_email = "jean-louis.fuchs@adfinis-sygroup.ch",
         description = "Freeze - dump / hash / sort / compare / diff anything",
         long_description = """
 Freeze the state of data-structures and objects for data-analysis or testing
