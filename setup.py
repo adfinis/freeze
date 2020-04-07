@@ -42,13 +42,17 @@ def do_setup(cython=False):
 
         author = "Adfinis-SyGroup",
         author_email = "jean-louis.fuchs@adfinis-sygroup.ch",
-        description = "Freeze - dump / hash / sort / compare / diff anything",
+        description = "Diff and dump anything",
         long_description = """
 Freeze the state of data-structures and objects for data-analysis or testing
 (diffing data-structures). Frozen data-structures consist of only tuples
 and these are comparable/sortable/hashable. The freeze() function can be used
 for many purposes for example implement __hash__() for your complex object
-very fast. dump() is intended for testing and analysis.""",
+very fast. dump() is intended for testing and analysis.
+
+NOTE: This is a long dead project a lot of people are installing for some reason. You
+don't need it, trust me.
+""",
         keywords = "freeze state hash sort compare unittest",
         url = "https://github.com/adfinis-sygroup/freeze",
         classifiers = [
