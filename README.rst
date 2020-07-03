@@ -1,14 +1,9 @@
-==============================
-Everybody is installing freeze
-==============================
-
-let's celebrate with a challenge_
-=================================
+======================================
+Freeze has been renamed to pretty_dump
+======================================
 
 Diff and dump everything
 ------------------------
-
-.. _challenge: https://ad-sy.ch/bH
 
 `Read the Docs`_
 
