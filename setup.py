@@ -6,8 +6,7 @@ from setuptools import setup
 
 warnings.warn(
     """
-'freeze' has been renamed to 'pretty_dump', because people are confusing it with 'pip
-freeze'. You probably don't need 'freeze' nor 'pretty_dump'.
+pretty_dump has been deprecated
 """.strip(),
     DeprecationWarning,
 )
@@ -39,7 +38,7 @@ def do_setup(cython=False):
         ext_modules = []
 
     setup(
-        name="freeze",
+        name="pretty_dump",
         version=__version__,
         packages=packages,
         ext_modules=ext_modules,
@@ -47,12 +46,7 @@ def do_setup(cython=False):
         author="Adfinis-SyGroup",
         author_email="jean-louis.fuchs@adfinis-sygroup.ch",
         description="Diff and dump anything",
-        long_description="""
-Freeze the state of data-structures and objects for data-analysis or testing
-(diffing data-structures). Frozen data-structures consist of only tuples
-and these are comparable/sortable/hashable. The freeze() function can be used
-for many purposes for example implement __hash__() for your complex object
-very fast. dump() is intended for testing and analysis.
+        long_description="""This package is deprecated.
 
 NOTE: This is a long dead project a lot of people are installing for some reason. You
 don't need it, trust me.
